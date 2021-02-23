@@ -13,31 +13,50 @@ app.use(cors())
 
 app.get('/status', (req, res) => {
     res.send({
-        message: 'hello world!'
+        message: 'Status OK!'
     })
 })
 
-app.put('/addScore', function(req,res){
+app.put('/calculateTotal', function(req,res){
 
-    const entry = req.body.completeTurn
-    const history = req.body.history
-    const roundId = req.body.roundId
+    const calcObj = req.body
 
-    console.log('~~~~~~Current Turn~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-    console.log(entry[0])
-    console.log(entry[1])
-    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-    if(roundId > 0 || entry[0].strike){
-        console.log('~~~~~~History~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        var arrLength = history.length;
-       for(var i = 0; i < arrLength; i++){
-           console.log(history[i])
-       }
-       console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~') 
+    const history = calcObj.player.entries
+    const historySize = calcObj.player.entries.length
+    const currEntry = history[historySize - 1]
+    const prevEntry = calcObj.player.latestEntry
+    const score = calcObj.score
+    
+    var prevPrevEntry = {}
+    if(calcObj.totalTries >= 2){
+      prevPrevEntry = history[historySize - 3]
     }
 
-    res.send("Done.")
+    var addToTotal = 0;
+
+    /*If current entry is a strike or spare,
+    do not add any points yet*/
+    if(!currEntry.strike && !currEntry.spare){
+        addToTotal = score
+    }
+
+    /*2 tries since a strike - add points*/
+    if(prevPrevEntry.strike){
+        addToTotal += 10 + prevEntry.value + calcObj.score
+        console.log('Strike points added!')
+    }
+    
+    /*Previous try was a spare - add points*/
+    if(prevEntry.spare){
+        addToTotal += (10 - prevPrevEntry.value) + calcObj.score
+        console.log('Spare points added!')
+    }
+
+    console.log('~~~~~~Current Turn~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+    console.log(currEntry)
+    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+    res.send({scoreContainer: addToTotal})
 })
 
 app.listen(process.env.PORT || 8081)

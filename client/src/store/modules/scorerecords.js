@@ -1,14 +1,20 @@
 import Api from '@/services/Api'
 
-
-
 // State for this component, that can be accessed by the application.
 const state = {
-    rounds:[],
-    turnCount: 0,
-    roundId: 0,
-    activeScores:[],
-    totalScore: 0
+    totalScore: 0,
+    totalTries: 0,
+    player : {
+        entries : [], 
+        currTry : 0, 
+        currRound : 0,
+        latestEntry : 
+        {
+            value: 0,
+            strike: false,
+            spare: false
+        }
+    }
     }; 
 
 //Gets the global state of the component
@@ -19,48 +25,101 @@ const getters = {
 // Run services on backend and commit changes with actions, 
 // deciding which mutation function to be called for each variant.
 const actions = {
-  async addScore({commit}, newScoreValue){
-      if(state.turnCount < 2)
+      updatePlayer({commit}, newScoreValue){
+      //if(state.intitalRecord)
       {
-        const entryData = {
-            entry:{
-                value: newScoreValue,
-                spare: false,
-                strike: false,
+        /*Check status of game and round*/
+        if(state.player.currRound < 12){
+            
+            var newEntry = {}
+            /*Check if strike*/
+            if(state.player.currTry == 0 && newScoreValue == 10){
+                newEntry = {
+                    value: newScoreValue,
+                    strike: true,
+                    spare: false
+                }
+                console.log('Strike!')
             }
-        }
-
-        if(state.turnCount == 0 && entryData.entry.value == 10){
-            entryData.entry.strike = true; 
-            console.log('Strike!')
-        }
-        else if(state.turnCount > 0 && state.activeScores[0].entry.value + 
-            entryData.entry.value >= 10){
-                entryData.entry.spare = true;
+            /*Check if spare*/
+            else if(state.player.currTry == 1 && 
+                (state.player.entries[state.player.entries.length - 1].value + newScoreValue) == 10){
+                newEntry = {
+                    value: newScoreValue,
+                    strike: false,
+                    spare: true
+                }
                 console.log('Spare!') 
             }
-
-        state.activeScores[state.turnCount] = entryData
-        state.turnCount++; 
-   
-        if(state.turnCount == 2 || entryData.entry.strike){
-         await Api().put(`addScore`, 
-            {completeTurn: state.activeScores, history: state.rounds, roundId: state.roundId})
-            .then(
-                commit('addScoreNew',state.activeScores) 
-            )
-            state.activeScores = []
+            else{
+                newEntry = {
+                    value: newScoreValue,
+                    strike: false,
+                    spare: false
+                }
+            }
         }
+
+        /*Fetch the entry history to add to the player*/
+        var entryArr = state.player.entries
+        var arrSize = entryArr.push(newEntry)
+
+        var newPlayerState = {}
+        if(state.player.currRound == 0 && state.player.currTry == 0)
+        {   
+            newPlayerState = {
+                entries : entryArr,
+                currTry : state.player.currTry + 1,
+                currRound : state.player.currRound,
+                latestEntry : {}
+               }
+        }
+        else{
+            newPlayerState = {
+                entries : entryArr,
+                currTry : state.player.currTry + 1,
+                currRound : state.player.currRound,
+                latestEntry : entryArr[(arrSize - 1) -1]
+               } 
+        }
+     
+       commit('mUpdatePlayer', newPlayerState)
       }
+  },
+  async calculate({commit}, newScoreValue){
+      var calcObj ={
+          score : newScoreValue,
+          totalTries: state.totalTries,
+          player : state.player
+      }
+      await Api().put('calculateTotal', calcObj)
+      .then( (res) => {
+        commit('updateTotal', res.data.scoreContainer)
+        console.log(res.data)
+      }
+    )
   }
 };
 
+
 // Submit results of actions to the overall application state
 const mutations = {
-    addScoreNew: (state, newEntry, total)  => {
-        state.rounds[state.roundId] = newEntry
-        state.turnCount = 0
-        state.roundId++;
+    mUpdatePlayer: (state, playerState)  => {
+        state.player = playerState
+    },
+    updateTotal: (state, addToTotal) => {
+        state.totalScore += addToTotal
+        state.totalTries++;
+
+        const historyLength = state.player.entries.length
+        const strikeStatus = state.player.entries[historyLength - 1].strike
+
+        if(state.player.currTry >= 2 || strikeStatus){
+            state.player.currRound++
+            state.player.currTry = 0
+        }
+
+        console.log('The total score is now: ' + state.totalScore)
     }
 };
 
