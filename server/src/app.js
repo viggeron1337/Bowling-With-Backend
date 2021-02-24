@@ -6,8 +6,6 @@ const morgan = require('morgan')
 //Build express server
 const app = express(); 
 app.use(morgan('combined'))
-//app.use(bodyParser.json())
-//app.use(bodyParser.urlencoded({extended: false}))
 app.use(express.json())
 app.use(cors())
 

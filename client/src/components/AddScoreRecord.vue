@@ -14,19 +14,45 @@
       <button v-on:click="registerState(9)" type="button">9</button>
        <button v-on:click="registerState(10)" type="button">10</button>
       </div>
-  </div>
+        <TotalScoreComponent :totalScore="total">
+        </TotalScoreComponent>
+ </div>
 </template>
 
 <script>
 import {mapActions} from 'vuex'
-export default {
+import {mapGetters} from 'vuex'
+import TotalScoreComponent from '../components/TotalScore.vue'
+
+export default{
   name: 'AddScoreRecord',
+  components:{
+    TotalScoreComponent
+  },
+  /*data - container for the data belonging to this component:
+  needs to be returned from a function so that every new
+  instance of this component gets thier own versions.
+  This differs from props not only because of the above, but also
+  because these are items we want to keep track of.*/
+  data(){
+    return{
+    }
+  },
+  /*methods - contains the methods of this component,
+  allows for parameters as opposed to computed*/
   methods: {
     ...mapActions(['updatePlayer','calculate']),
     registerState (value) {
       this.updatePlayer(value)
       this.calculate(value)
     }
+  },
+  /*computed - properties does not get updated everytime we re-render -
+  only when they have been affected*/
+  computed: {
+       ...mapGetters({
+         total: 'getTotal',
+       })
   }
 }
 </script>
@@ -41,5 +67,13 @@ h2{
 
 .inputButtons{
   float: left;
+}
+
+.total{
+   font-family: 'Courier New', Courier, monospace;
+  position:absolute;
+  top: 270px;
+  left: 10px;
+  color: rgba(100, 10, 20, 255);
 }
 </style>

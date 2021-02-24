@@ -19,7 +19,9 @@ const state = {
 
 //Gets the global state of the component
 const getters = {
-    allRoundRecords: (state) => state.rounds
+    getTotal(state){
+       return state.totalScore
+    }
 };
 
 // Run services on backend and commit changes with actions, 
@@ -95,7 +97,6 @@ const actions = {
       await Api().put('calculateTotal', calcObj)
       .then( (res) => {
         commit('updateTotal', res.data.scoreContainer)
-        console.log(res.data)
       }
     )
   }
@@ -106,10 +107,6 @@ const actions = {
 const mutations = {
     mUpdatePlayer: (state, playerState)  => {
         state.player = playerState
-    },
-    updateTotal: (state, addToTotal) => {
-        state.totalScore += addToTotal
-        state.totalTries++;
 
         const historyLength = state.player.entries.length
         const strikeStatus = state.player.entries[historyLength - 1].strike
@@ -118,6 +115,10 @@ const mutations = {
             state.player.currRound++
             state.player.currTry = 0
         }
+    },
+    updateTotal: (state, addToTotal) => {
+        state.totalScore += addToTotal
+        state.totalTries++;
 
         console.log('The total score is now: ' + state.totalScore)
     }
