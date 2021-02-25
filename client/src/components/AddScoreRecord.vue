@@ -1,22 +1,17 @@
 <template>
+<div>
+<h2>Enter Turn Score</h2>
   <div>
-      <h2>Enter Turn Score</h2>
-      <div class = "inputButtons">
-      <button v-on:click="registerState(0)" type="button">0</button>
-      <button v-on:click="registerState(1)" type="button">1</button>
-      <button v-on:click="registerState(2)" type="button">2</button>
-      <button v-on:click="registerState(3)" type="button">3</button>
-      <button v-on:click="registerState(4)" type="button">4</button>
-      <button v-on:click="registerState(5)" type="button">5</button>
-      <button v-on:click="registerState(6)" type="button">6</button>
-      <button v-on:click="registerState(7)" type="button">7</button>
-      <button v-on:click="registerState(8)" type="button">8</button>
-      <button v-on:click="registerState(9)" type="button">9</button>
-       <button v-on:click="registerState(10)" type="button">10</button>
-      </div>
-        <TotalScoreComponent :totalScore="total">
-        </TotalScoreComponent>
- </div>
+    <ul>
+      <li v-for="index in 11" :key="index">
+        <button v-on:click="registerState(index - 1)" type="button">{{index - 1}}</button>
+      </li>
+    </ul>
+  </div>
+  <TotalScoreComponent 
+  :totalScore="total">
+  </TotalScoreComponent>
+</div>
 </template>
 
 <script>
@@ -59,21 +54,23 @@ export default{
 
 <style scoped>
 h2{
-  color: #DC143C;
-  background: #FFE4B5;
+  position: inherit;
   padding: 20px 57.5px;
   display: table-cell;
+  background:rgb(42, 48, 53);
+  color:rgb(65, 148, 107)
 }
 
-.inputButtons{
-  float: left;
+ul{
+  position: relative;;
+  list-style-type: none;
+  display: flex;
+  flex-direction: row;
+  left: -45px;
+  top: -17px;
 }
 
-.total{
-   font-family: 'Courier New', Courier, monospace;
-  position:absolute;
-  top: 270px;
-  left: 10px;
-  color: rgba(100, 10, 20, 255);
+li{
+  padding-left: 4.5px;
 }
 </style>

@@ -28,8 +28,7 @@ const getters = {
 // deciding which mutation function to be called for each variant.
 const actions = {
       updatePlayer({commit}, newScoreValue){
-      //if(state.intitalRecord)
-      {
+
         /*Check status of game and round*/
         if(state.player.currRound < 12){
             
@@ -86,7 +85,6 @@ const actions = {
         }
      
        commit('mUpdatePlayer', newPlayerState)
-      }
   },
   async calculate({commit}, newScoreValue){
       var calcObj ={

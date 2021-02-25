@@ -1,4 +1,5 @@
 <template>
+<body>
   <div id="app">
     <div id="nav">
       <router-link to="/">Home</router-link> |
@@ -6,6 +7,7 @@
     </div>
     <router-view/>
   </div>
+</body>
 </template>
 
 <script>
@@ -14,13 +16,14 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+  background: rgb(112, 167, 139);
 }
 
 #nav {
@@ -33,6 +36,6 @@ export default {
 }
 
 #nav a.router-link-exact-active {
-  color: #DC143C;
+  color: #0e8f2a;
 }
 </style>

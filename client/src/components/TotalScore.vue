@@ -16,9 +16,10 @@ export default {
 <style>
 .total{
   font-family: 'Courier New', Courier, monospace;
-  position:absolute;
-  top: 270px;
-  left: 10px;
-  color: rgba(100, 10, 20, 255);
+  position: relative;
+  top: 0px;
+  left: 0px;
+  color: rgba(50, 70, 50, 255);
+  background:rgba(144, 202, 144,155);
 }
 </style>
