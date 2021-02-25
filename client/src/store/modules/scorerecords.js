@@ -17,75 +17,22 @@ const state = {
     }
     }; 
 
-//Gets the global state of the component
+//Getters for state props
 const getters = {
     getTotal(state){
        return state.totalScore
-    }
+    },
+    getLatest(state){
+        return state.player.latestEntry
+    },
+    getCurrRound(state){
+        return state.player.currRound
+    },
 };
 
 // Run services on backend and commit changes with actions, 
 // deciding which mutation function to be called for each variant.
 const actions = {
-      updatePlayer({commit}, newScoreValue){
-
-        /*Check status of game and round*/
-        if(state.player.currRound < 12){
-            
-            var newEntry = {}
-            /*Check if strike*/
-            if(state.player.currTry == 0 && newScoreValue == 10){
-                newEntry = {
-                    value: newScoreValue,
-                    strike: true,
-                    spare: false
-                }
-                console.log('Strike!')
-            }
-            /*Check if spare*/
-            else if(state.player.currTry == 1 && 
-                (state.player.entries[state.player.entries.length - 1].value + newScoreValue) == 10){
-                newEntry = {
-                    value: newScoreValue,
-                    strike: false,
-                    spare: true
-                }
-                console.log('Spare!') 
-            }
-            else{
-                newEntry = {
-                    value: newScoreValue,
-                    strike: false,
-                    spare: false
-                }
-            }
-        }
-
-        /*Fetch the entry history to add to the player*/
-        var entryArr = state.player.entries
-        var arrSize = entryArr.push(newEntry)
-
-        var newPlayerState = {}
-        if(state.player.currRound == 0 && state.player.currTry == 0)
-        {   
-            newPlayerState = {
-                entries : entryArr,
-                currTry : state.player.currTry + 1,
-                currRound : state.player.currRound,
-                latestEntry : {}
-               }
-        }
-        else{
-            newPlayerState = {
-                entries : entryArr,
-                currTry : state.player.currTry + 1,
-                currRound : state.player.currRound,
-                latestEntry : entryArr[(arrSize - 1) -1]
-               } 
-        }
-     
-       commit('mUpdatePlayer', newPlayerState)
-  },
   async calculate({commit}, newScoreValue){
       var calcObj ={
           score : newScoreValue,
@@ -94,32 +41,62 @@ const actions = {
       }
       await Api().put('calculateTotal', calcObj)
       .then( (res) => {
-        commit('updateTotal', res.data.scoreContainer)
+        commit('mFinishRound', res.data.scoreContainer)
       }
     )
   }
 };
 
 
-// Submit results of actions to the overall application state
+/*Submit to state via mutations. Usually this is done through
+actions - but since most of the needed operations are not asynchronous,
+I commit most of these mutations from a method in "AddScoreRecord.vue"*/
 const mutations = {
-    mUpdatePlayer: (state, playerState)  => {
-        state.player = playerState
-
-        const historyLength = state.player.entries.length
-        const strikeStatus = state.player.entries[historyLength - 1].strike
-
+    mCheckRound: (state)  => {
+        const strikeStatus = state.player.latestEntry.strike
         if(state.player.currTry >= 2 || strikeStatus){
             state.player.currRound++
             state.player.currTry = 0
         }
     },
-    updateTotal: (state, addToTotal) => {
+    mAddStrike: (state) => {
+        const strikeEntry = {
+            value: 10,
+            strike: true,
+            spare: false
+        }
+        state.player.latestEntry = strikeEntry
+        state.player.entries.push(strikeEntry)
+        state.player.currTry++
+        console.log("Strike!")
+    },
+    mAddSpare: (state, newScore) => {
+        const spareEntry = {
+            value: newScore,
+            strike: false,
+            spare: true
+        }
+        state.player.latestEntry = spareEntry
+        state.player.entries.push(spareEntry)
+        state.player.currTry++
+        console.log("Spare!")
+    },
+    mAddEntry: (state, newScore) =>{
+        const entry = {
+            value: newScore,
+            strike: false,
+            spare: false
+        }
+        state.player.latestEntry = entry
+        state.player.entries.push(entry)
+        state.player.currTry++
+    },
+    mFinishRound: (state, addToTotal) => {
         state.totalScore += addToTotal
         state.totalTries++;
-
         console.log('The total score is now: ' + state.totalScore)
-    }
+    },
+
 };
 
 export default {

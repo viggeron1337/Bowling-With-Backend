@@ -21,9 +21,13 @@ app.put('/calculateTotal', function(req,res){
 
     const history = calcObj.player.entries
     const historySize = calcObj.player.entries.length
-    const currEntry = history[historySize - 1]
-    const prevEntry = calcObj.player.latestEntry
+    const currEntry = calcObj.player.latestEntry
     const score = calcObj.score
+    
+    var prevEntry = {}
+    if(calcObj.totalTries >= 1){
+        prevEntry =  history[historySize - 2]
+    }
     
     var prevPrevEntry = {}
     if(calcObj.totalTries >= 2){

@@ -4,7 +4,7 @@
   <div>
     <ul>
       <li v-for="index in 11" :key="index">
-        <button v-on:click="registerState(index - 1)" type="button">{{index - 1}}</button>
+        <button v-on:click="checkState(index - 1)" type="button">{{index - 1}}</button>
       </li>
     </ul>
   </div>
@@ -17,6 +17,7 @@
 <script>
 import {mapActions} from 'vuex'
 import {mapGetters} from 'vuex'
+import {mapMutations} from 'vuex'
 import TotalScoreComponent from '../components/TotalScore.vue'
 
 export default{
@@ -36,9 +37,23 @@ export default{
   /*methods - contains the methods of this component,
   allows for parameters as opposed to computed*/
   methods: {
-    ...mapActions(['updatePlayer','calculate']),
-    registerState (value) {
-      this.updatePlayer(value)
+    ...mapActions(['calculate']),
+    ...mapMutations(['mAddStrike','mAddSpare', 'mAddEntry','mCheckRound']),
+
+    checkState(value){
+      if(this.round < 12)
+      {
+        if(value == 10){
+          this.mAddStrike()
+        }
+        else if(value + this.latestEntry.value == 10){
+          this.mAddSpare(value)
+        }
+        else{
+          this.mAddEntry(value)
+        }
+      }
+      this.mCheckRound()
       this.calculate(value)
     }
   },
@@ -47,6 +62,8 @@ export default{
   computed: {
        ...mapGetters({
          total: 'getTotal',
+         latestEntry: 'getLatest',
+         round: 'getCurrRound'
        })
   }
 }

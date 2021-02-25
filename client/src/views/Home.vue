@@ -23,8 +23,4 @@ export default {
      background: rgba(50,70,88,255);
      color: rgba(70,150,50,255);
   }
-
-  AddScoreRecord{
-    background: tomato;
-  }
 </style>
