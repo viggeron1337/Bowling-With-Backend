@@ -38,4 +38,12 @@ export default {
 #nav a.router-link-exact-active {
   color: #0e8f2a;
 }
+
+html, body{
+  width: 100%;
+  height: 100%;
+  margin: 0; 
+  padding: 0;
+  border: 0;
+}
 </style>
