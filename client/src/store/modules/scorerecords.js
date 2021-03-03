@@ -54,8 +54,6 @@ const actions = {
     }
 };
 
-
-
 /*Submit to state via mutations. Usually this is done through
 actions - but since most of the needed operations are not asynchronous,
 I commit most of these mutations from a method in "AddScoreRecord.vue"*/

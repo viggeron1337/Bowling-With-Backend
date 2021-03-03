@@ -15,7 +15,7 @@
 <script>
 import { mapActions } from "vuex";
 import TotalScoreComponent from "../components/TotalScore.vue";
-import store from '@/store/modules/scorerecords.js'
+import store from "@/store/modules/scorerecords.js";
 export default {
   name: "AddScoreRecord",
   components: {
@@ -28,9 +28,10 @@ export default {
   because these are items we want to keep track of.*/
   data() {
     return {
-      round : 0,
-      latestEntry : {},
-      total: 0
+      round: 0,
+      latestEntry: {},
+      total: 0,
+      allPins : 10
     };
   },
   /*methods - contains the methods of this component,
@@ -47,28 +48,12 @@ export default {
     ]),
     async checkState(pinsHit) {
       
-      this.round = store.state.player.currRound
-      this.latestEntry = store.state.player.latestEntry
+      this.round = store.state.player.currRound;
+      this.latestEntry = store.state.player.latestEntry;
 
       if (this.round < 12) {
-         /*Create an empty entry*/
-        var entry = this.createEntry(pinsHit);
-        /*Check if strike*/
-        if (pinsHit == 10) {
-          entry.strike = true;
-          this.aAddEntry(entry);
-          this.aResetTries();
-        } 
-        /*Check if spare*/
-        else if (pinsHit + this.latestEntry.pinsHit == 10) {
-          entry.spare = true;
-          this.aAddEntry(entry);
-          this.aResetTries();
-        } 
-        /*Else just add entry*/
-        else {
-          this.aAddEntry(entry);
-        }
+        /*Check if strike, spare or normal entry.*/
+        this.CheckScoreType(pinsHit);
         /*Check if next round is to be started*/
         this.aCheckRound();
         /*Update total score with latest entry.*/
@@ -82,7 +67,7 @@ export default {
         /*After score has been registered, increase total tires and
         print new total*/
         this.aIncTotalTries();
-        this.total = store.state.totalScore
+        this.total = store.state.totalScore;
         console.log("Done!");
       });
     },
@@ -92,14 +77,32 @@ export default {
         spare: false,
         pinsHit: pinsHit
       };
+    },
+    CheckScoreType(pinsHit) {
+      /*Create an empty entry*/
+      var entry = this.createEntry(pinsHit);
+      /*Check if strike*/
+      if (pinsHit == this.allPins) {
+        entry.strike = true;
+        this.aAddEntry(entry);
+        this.aResetTries();
+      }
+      /*Check if spare*/ 
+      else if (pinsHit + this.latestEntry.pinsHit == this.allPins) {
+        entry.spare = true;
+        this.aAddEntry(entry);
+        this.aResetTries();
+      }
+      /*Else just add entry*/ 
+      else {
+        this.aAddEntry(entry);
+      }
     }
   },
   /*computed - properties does not get updated everytime we re-render -
   only when they have been affected. Often used when wanting to access
   results of state calculations.*/
-  computed: {
-
-  }
+  computed: {}
 };
 </script>
 
