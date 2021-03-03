@@ -17,20 +17,22 @@ app.get('/status', (req, res) => {
 
 app.put('/calculateTotal', function(req,res){
 
-    const calcObj = req.body
+    const calcTotal = req.body
 
-    const history = calcObj.player.entries
-    const historySize = calcObj.player.entries.length
-    const currEntry = calcObj.player.latestEntry
-    const score = calcObj.score
+    const history = calcTotal.player.entries
+    const historySize = calcTotal.player.entries.length
+    const currEntry = calcTotal.player.latestEntry
+    const pinsHit = calcTotal.pins
+
+    const maxPins = 10
     
     var prevEntry = {}
-    if(calcObj.totalTries >= 1){
+    if(calcTotal.totalTries >= 1){
         prevEntry =  history[historySize - 2]
     }
     
     var prevPrevEntry = {}
-    if(calcObj.totalTries >= 2){
+    if(calcTotal.totalTries >= 2){
       prevPrevEntry = history[historySize - 3]
     }
 
@@ -39,18 +41,18 @@ app.put('/calculateTotal', function(req,res){
     /*If current entry is a strike or spare,
     do not add any points yet*/
     if(!currEntry.strike && !currEntry.spare){
-        addToTotal = score
+        addToTotal = pinsHit
     }
 
     /*2 tries since a strike - add points*/
     if(prevPrevEntry.strike){
-        addToTotal += 10 + prevEntry.value + calcObj.score
+        addToTotal += maxPins + prevEntry.pinsHit + currEntry.pinsHit
         console.log('Strike points added!')
     }
     
     /*Previous try was a spare - add points*/
     if(prevEntry.spare){
-        addToTotal += (10 - prevPrevEntry.value) + calcObj.score
+        addToTotal += (maxPins - prevPrevEntry.pinsHit) + currEntry.pinsHit
         console.log('Spare points added!')
     }
 

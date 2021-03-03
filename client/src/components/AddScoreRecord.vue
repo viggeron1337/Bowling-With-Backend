@@ -1,22 +1,21 @@
 <template>
   <div>
     <h2>Enter Turn Score</h2>
-      <ul>
-        <li v-for="index in 11" :key="index">
-          <button v-on:click="checkState(index - 1)" type="button">{{index - 1}}</button>
-        </li>
-      </ul>
+    <ul>
+      <li v-for="index in 11" :key="index">
+        <button v-on:click="checkState(index - 1)" type="button">{{index - 1}}</button>
+      </li>
+    </ul>
     <div id="totalScore">
-      <TotalScoreComponent :totalScore="total"></TotalScoreComponent>
+      <TotalScoreComponent :totalScore="this.total"></TotalScoreComponent>
     </div>
   </div>
 </template>
 
 <script>
 import { mapActions } from "vuex";
-import { mapGetters } from "vuex";
-import { mapMutations } from "vuex";
 import TotalScoreComponent from "../components/TotalScore.vue";
+import store from '@/store/modules/scorerecords.js'
 export default {
   name: "AddScoreRecord",
   components: {
@@ -28,37 +27,78 @@ export default {
   This differs from props not only because of the above, but also
   because these are items we want to keep track of.*/
   data() {
-    return {};
+    return {
+      round : 0,
+      latestEntry : {},
+      total: 0
+    };
   },
   /*methods - contains the methods of this component,
   allows for parameters as opposed to computed*/
   methods: {
-    ...mapActions(["calculate"]),
-    ...mapMutations(["mAddStrike", "mAddSpare", "mAddEntry", "mCheckRound"]),
-    async checkState(value) {
+    ...mapActions([
+      "aCalculate",
+      "aAddEntry",
+      "aNextTry",
+      "aResetTries",
+      "aIncTotalTries",
+      "aAddToTotal",
+      "aCheckRound"
+    ]),
+    async checkState(pinsHit) {
+      
+      this.round = store.state.player.currRound
+      this.latestEntry = store.state.player.latestEntry
+
       if (this.round < 12) {
-        if (value == 10) {
-          this.mAddStrike();
-        } else if (value + this.latestEntry.value == 10) {
-          this.mAddSpare(value);
-        } else {
-          this.mAddEntry(value);
+         /*Create an empty entry*/
+        var entry = this.createEntry(pinsHit);
+        /*Check if strike*/
+        if (pinsHit == 10) {
+          entry.strike = true;
+          this.aAddEntry(entry);
+          this.aResetTries();
+        } 
+        /*Check if spare*/
+        else if (pinsHit + this.latestEntry.pinsHit == 10) {
+          entry.spare = true;
+          this.aAddEntry(entry);
+          this.aResetTries();
+        } 
+        /*Else just add entry*/
+        else {
+          this.aAddEntry(entry);
         }
-        this.mCheckRound();
-        await this.calculate(value).then(() => {
-          console.log("Done!");
-        });
+        /*Check if next round is to be started*/
+        this.aCheckRound();
+        /*Update total score with latest entry.*/
+        await this.upateTotalScore(pinsHit);
+        /*Set the current try*/
+        this.aNextTry();
       }
+    },
+    async upateTotalScore(pinsHit) {
+      await this.aCalculate(pinsHit).then(() => {
+        /*After score has been registered, increase total tires and
+        print new total*/
+        this.aIncTotalTries();
+        this.total = store.state.totalScore
+        console.log("Done!");
+      });
+    },
+    createEntry(pinsHit) {
+      return {
+        strike: false,
+        spare: false,
+        pinsHit: pinsHit
+      };
     }
   },
   /*computed - properties does not get updated everytime we re-render -
-  only when they have been affected*/
+  only when they have been affected. Often used when wanting to access
+  results of state calculations.*/
   computed: {
-    ...mapGetters({
-      total: "getTotal",
-      latestEntry: "getLatest",
-      round: "getCurrRound"
-    })
+
   }
 };
 </script>
@@ -71,7 +111,7 @@ h2 {
   color: rgb(65, 148, 107);
 }
 ul {
-  position:relative;
+  position: relative;
   list-style-type: none;
   display: inline-flex;
   flex-direction: row;
