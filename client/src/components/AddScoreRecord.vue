@@ -13,7 +13,6 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
 import TotalScoreComponent from "../components/TotalScore.vue";
 import store from "@/store/modules/scorerecords.js";
 export default {
@@ -37,15 +36,6 @@ export default {
   /*methods - contains the methods of this component,
   allows for parameters as opposed to computed*/
   methods: {
-    ...mapActions([
-      "aCalculate",
-      "aAddEntry",
-      "aNextTry",
-      "aResetTries",
-      "aIncTotalTries",
-      "aAddToTotal",
-      "aCheckRound"
-    ]),
     async checkState(pinsHit) {
       
       this.round = store.state.player.currRound;
@@ -55,19 +45,19 @@ export default {
         /*Check if strike, spare or normal entry.*/
         this.CheckScoreType(pinsHit);
         /*Check if next round is to be started*/
-        this.aCheckRound();
+        this.$store.dispatch('aCheckRound');
         /*Update total score with latest entry.*/
         await this.upateTotalScore(pinsHit);
         /*Set the current try*/
-        this.aNextTry();
+        this.$store.dispatch('aNextTry');
       }
     },
     async upateTotalScore(pinsHit) {
-      await this.aCalculate(pinsHit).then(() => {
+      await this.$store.dispatch('aCalculate', pinsHit).then(() => {
         /*After score has been registered, increase total tires and
         print new total*/
-        this.aIncTotalTries();
-        this.total = store.state.totalScore;
+        this.$store.dispatch('aIncTotalTries');
+        this.total = store.state.totalScore
         console.log("Done!");
       });
     },
@@ -84,18 +74,18 @@ export default {
       /*Check if strike*/
       if (pinsHit == this.allPins) {
         entry.strike = true;
-        this.aAddEntry(entry);
-        this.aResetTries();
+        this.$store.dispatch('aAddEntry', entry);
+        this.$store.dispatch('aResetTries');
       }
       /*Check if spare*/ 
       else if (pinsHit + this.latestEntry.pinsHit == this.allPins) {
         entry.spare = true;
-        this.aAddEntry(entry);
-        this.aResetTries();
+        this.$store.dispatch('aAddEntry', entry);
+        this.$store.dispatch('aResetTries');
       }
       /*Else just add entry*/ 
       else {
-        this.aAddEntry(entry);
+        this.$store.dispatch('aAddEntry', entry);
       }
     }
   },

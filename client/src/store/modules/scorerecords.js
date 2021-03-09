@@ -23,7 +23,7 @@ export const state = {
 
 // Run services on backend and commit changes with actions,
 // deciding which mutation function to be called for each variant.
-const actions = {
+    const actions = {
     async aCalculate({
         commit
     }, pinsHit) {
