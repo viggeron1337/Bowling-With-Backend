@@ -1,6 +1,6 @@
 import Api from '@/services/Api'
 
-// State that can be accessed by the application.
+// State container for the application
 export const state = {
     totalScore: 0,
     totalTries: 0,
@@ -8,7 +8,6 @@ export const state = {
     player: {
         entries: [],
         currTry: 0,
-        currRound: 0,
         latestEntry: {
             pinsHit: 0,
             strike: false,
@@ -23,9 +22,7 @@ export const getters = {};
 // Run services on backend and commit changes with actions,
 // deciding which mutation function to be called for each variant.
 const actions = {
-    async aCalculate({
-        commit
-    }, pinsHit) {
+    async aCalculate({commit}, pinsHit) {
         var calcTotal = {
             pins: pinsHit,
             totalTries: state.totalTries,
@@ -36,9 +33,7 @@ const actions = {
             console.log("Submitted")
         })
     },
-    aAddEntry({
-        commit
-    }, entry) {
+    aAddEntry({commit}, entry) {
         commit('mAddEntry', entry)
     },
     aNextTry({commit}) {
@@ -50,29 +45,16 @@ const actions = {
     aIncTotalTries({commit}) {
         commit('mIncTotalTries')
     },
-    aCheckRound({commit}) {
-        commit('mCheckRound')
-    },
-    aSetTotalTries({
-        commit
-    }, tryIndex) {
+    aSetTotalTries({commit}, tryIndex) {
         commit('mSetTotalTries', tryIndex)
     },
-    aSetMaxTries({commit},max) {
+    aSetMaxTries({commit}, max) {
         commit('mSetMaxTries', max)
     }
 };
 
-/*Submit to state via mutations. Usually this is done through
-actions - but since most of the needed operations are not asynchronous,
-I commit most of these mutations from a method in "AddScoreRecord.vue"*/
+/*Submit to state via mutations.*/
 const mutations = {
-    mCheckRound: (state) => {
-        const strikeStatus = state.player.latestEntry.strike
-        if (state.player.currTry == 0 || strikeStatus) {
-            state.player.currRound ++
-        }
-    },
     mAddEntry: (state, entry) => {
         state.player.latestEntry = entry
         state.player.entries.push(entry)

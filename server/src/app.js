@@ -21,9 +21,9 @@ app.put('/calculateTotal', function (req, res) {
     const historySize = calcTotal.player.entries.length
     const currEntry = calcTotal.player.latestEntry
     const pinsHit = calcTotal.pins
-    const currRound = calcTotal.player.currRound
+    const totalTries = calcTotal.totalTries
 
-    const lastRound = 10
+    const bonusLimit = 20
     const maxPins = 10
 
     var prevEntry = {}
@@ -39,8 +39,9 @@ app.put('/calculateTotal', function (req, res) {
     var addToTotal = 0;
 
     /*If current entry is a strike or spare,
-    do not add any points yet*/
-    if ((! currEntry.strike && ! currEntry.spare) && currRound <= lastRound) {
+    do not add any points yet- else add points. Only do this when not on bonus turns 
+    since the total score of the bonus turns is calculated when the spare/strike bonus is evaluated*/
+    if ((! currEntry.strike && ! currEntry.spare) && totalTries < bonusLimit) {
         addToTotal = pinsHit
     }
 

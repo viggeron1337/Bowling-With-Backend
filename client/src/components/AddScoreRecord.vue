@@ -40,13 +40,9 @@ export default {
   allows for parameters as opposed to computed*/
   methods: {
     async checkState(pinsHit) {
-      
-      this.totalTries = store.state.totalTries
-  
-      if (this.totalTries < store.state.maxTries) {
-        /*Check if next round is to be started*/
-        this.$store.dispatch("aCheckRound");
+      this.totalTries = store.state.totalTries;
 
+      if (this.totalTries < store.state.maxTries) {
         /*Set the current try*/
         this.$store.dispatch("aNextTry");
 
@@ -56,26 +52,9 @@ export default {
         /*Update total score with latest entry.*/
         await this.upateTotalScore(pinsHit);
 
-        /*Award extra turns if spare or strike on round 10*/
+        /*Award extra turns if spare or strike on last turn*/
         this.checkExtend();
       }
-    },
-    async upateTotalScore(pinsHit) {
-      await this.$store.dispatch("aCalculate", pinsHit).then(() => {
-        /*After score has been registered, increase total tires and
-        print new total*/
-        this.latestEntry = store.state.player.latestEntry
-        this.updateTotalTryIndex(this.latestEntry)
-        this.total = store.state.totalScore;
-        console.log("Done!");
-      });
-    },
-    createEntry(pinsHit) {
-      return {
-        strike: false,
-        spare: false,
-        pinsHit: pinsHit,
-      };
     },
     checkScoreType(pinsHit) {
       /*Create an empty entry*/
@@ -89,34 +68,46 @@ export default {
         entry.strike = true;
         this.$store.dispatch("aAddEntry", entry);
         this.$store.dispatch("aResetCurrTry");
-      }
-      /*Check if spare*/ 
-      else if (
+      } else if (
+        /*Check if spare - currTry must be 2 not to evaluate spare acorss different tries*/
         pinsHit + this.latestEntry.pinsHit == this.allPins &&
         currTry == 2
       ) {
         entry.spare = true;
         this.$store.dispatch("aAddEntry", entry);
-      } 
-      /*Else just add entry*/
-      else {
+      } else {
+        /*Else just add entry*/
         this.$store.dispatch("aAddEntry", entry);
       }
-
       /*Make sure to reset current try for new round*/
       if (currTry == 2) {
         this.$store.dispatch("aResetCurrTry");
       }
     },
-    updateTotalTryIndex(entry){
+    createEntry(pinsHit) {
+      return {
+        strike: false,
+        spare: false,
+        pinsHit: pinsHit,
+      };
+    },
+    async upateTotalScore(pinsHit) {
+      await this.$store.dispatch("aCalculate", pinsHit).then(() => {
+        /*After score has been registered, increase total tires and
+        print new total. Use the latest entry to determine how many tries 
+        should be skipped.*/
+        this.latestEntry = store.state.player.latestEntry;
+        this.updateTotalTryIndex(this.latestEntry);
+        this.total = store.state.totalScore;
+        console.log("Done!");
+      });
+    },
+    updateTotalTryIndex(entry) {
       /*Aslong as the game has not been extended, a strike counts as 2 tries*/
-      if(entry.strike && !this.gameExtended)
-      {
+      if (entry.strike && !this.gameExtended) {
         this.$store.dispatch("aSetTotalTries", this.totalTries + 2);
-      }
-      else
-      {
-          this.$store.dispatch("aSetTotalTries", this.totalTries + 1);
+      } else {
+        this.$store.dispatch("aSetTotalTries", this.totalTries + 1);
       }
     },
     checkExtend() {
@@ -133,12 +124,11 @@ export default {
     extendGame(entry) {
       if (entry.spare) {
         this.$store.dispatch("aSetMaxTries", store.state.maxTries + 1);
-      } 
-      else {
-        this.$store.dispatch("aSetMaxTries", store.state.maxTries + 2); 
+      } else {
+        this.$store.dispatch("aSetMaxTries", store.state.maxTries + 2);
       }
       this.gameExtended = true;
-    }
+    },
   },
 
   /*computed - properties does not get updated everytime we re-render -
