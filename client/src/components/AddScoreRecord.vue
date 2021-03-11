@@ -2,7 +2,7 @@
   <div>
     <h2>Enter Turn Score</h2>
     <ul>
-      <li v-for="index in 11" :key="index">
+      <li v-for="index in this.activeButtons" :key="index">
         <button v-on:click="checkState(index - 1)" type="button">
           {{ index - 1 }}
         </button>
@@ -34,6 +34,7 @@ export default {
       allPins: 10,
       totalTries: 0,
       gameExtended: false,
+      activeButtons: 11,
     };
   },
   /*methods - contains the methods of this component,
@@ -51,6 +52,9 @@ export default {
 
         /*Update total score with latest entry.*/
         await this.upateTotalScore(pinsHit);
+
+        /*Adjust the buttons to be rendered*/
+        this.adjustButtons(pinsHit);
 
         /*Award extra turns if spare or strike on last turn*/
         this.checkExtend();
@@ -128,6 +132,16 @@ export default {
         this.$store.dispatch("aSetMaxTries", store.state.maxTries + 2);
       }
       this.gameExtended = true;
+    },
+    adjustButtons(pinsHit) {
+      if (
+        store.state.player.currTry == 1 &&
+        this.totalTries != store.state.maxTries - 1
+      ) {
+        this.activeButtons -= pinsHit;
+      } else {
+        this.activeButtons = 11;
+      }
     },
   },
 
