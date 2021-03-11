@@ -3,7 +3,9 @@
     <h2>Enter Turn Score</h2>
     <ul>
       <li v-for="index in 11" :key="index">
-        <button v-on:click="checkState(index - 1)" type="button">{{index - 1}}</button>
+        <button v-on:click="checkState(index - 1)" type="button">
+          {{ index - 1 }}
+        </button>
       </li>
     </ul>
     <div id="totalScore">
@@ -18,7 +20,7 @@ import store from "@/store/modules/scorerecords.js";
 export default {
   name: "AddScoreRecord",
   components: {
-    TotalScoreComponent
+    TotalScoreComponent,
   },
   /*data - container for the data belonging to this component:
   needs to be returned from a function so that every new
@@ -27,10 +29,11 @@ export default {
   because these are items we want to keep track of.*/
   data() {
     return {
-      round: 0,
       latestEntry: {},
       total: 0,
-      allPins : 10
+      allPins: 10,
+      totalTries: 0,
+      gameExtended: false,
     };
   },
   /*methods - contains the methods of this component,
@@ -38,26 +41,32 @@ export default {
   methods: {
     async checkState(pinsHit) {
       
-      this.round = store.state.player.currRound;
-      this.latestEntry = store.state.player.latestEntry;
-
-      if (this.round < 12) {
-        /*Check if strike, spare or normal entry.*/
-        this.CheckScoreType(pinsHit);
+      this.totalTries = store.state.totalTries
+  
+      if (this.totalTries < store.state.maxTries) {
         /*Check if next round is to be started*/
-        this.$store.dispatch('aCheckRound');
+        this.$store.dispatch("aCheckRound");
+
+        /*Set the current try*/
+        this.$store.dispatch("aNextTry");
+
+        /*Check if strike, spare or normal entry.*/
+        this.checkScoreType(pinsHit);
+
         /*Update total score with latest entry.*/
         await this.upateTotalScore(pinsHit);
-        /*Set the current try*/
-        this.$store.dispatch('aNextTry');
+
+        /*Award extra turns if spare or strike on round 10*/
+        this.checkExtend();
       }
     },
     async upateTotalScore(pinsHit) {
-      await this.$store.dispatch('aCalculate', pinsHit).then(() => {
+      await this.$store.dispatch("aCalculate", pinsHit).then(() => {
         /*After score has been registered, increase total tires and
         print new total*/
-        this.$store.dispatch('aIncTotalTries');
-        this.total = store.state.totalScore
+        this.latestEntry = store.state.player.latestEntry
+        this.updateTotalTryIndex(this.latestEntry)
+        this.total = store.state.totalScore;
         console.log("Done!");
       });
     },
@@ -65,34 +74,77 @@ export default {
       return {
         strike: false,
         spare: false,
-        pinsHit: pinsHit
+        pinsHit: pinsHit,
       };
     },
-    CheckScoreType(pinsHit) {
+    checkScoreType(pinsHit) {
       /*Create an empty entry*/
       var entry = this.createEntry(pinsHit);
+
+      //Fetch current try.
+      const currTry = store.state.player.currTry;
+
       /*Check if strike*/
       if (pinsHit == this.allPins) {
         entry.strike = true;
-        this.$store.dispatch('aAddEntry', entry);
-        this.$store.dispatch('aResetTries');
+        this.$store.dispatch("aAddEntry", entry);
+        this.$store.dispatch("aResetCurrTry");
       }
       /*Check if spare*/ 
-      else if (pinsHit + this.latestEntry.pinsHit == this.allPins) {
+      else if (
+        pinsHit + this.latestEntry.pinsHit == this.allPins &&
+        currTry == 2
+      ) {
         entry.spare = true;
-        this.$store.dispatch('aAddEntry', entry);
-        this.$store.dispatch('aResetTries');
-      }
-      /*Else just add entry*/ 
+        this.$store.dispatch("aAddEntry", entry);
+      } 
+      /*Else just add entry*/
       else {
-        this.$store.dispatch('aAddEntry', entry);
+        this.$store.dispatch("aAddEntry", entry);
       }
+
+      /*Make sure to reset current try for new round*/
+      if (currTry == 2) {
+        this.$store.dispatch("aResetCurrTry");
+      }
+    },
+    updateTotalTryIndex(entry){
+      /*Aslong as the game has not been extended, a strike counts as 2 tries*/
+      if(entry.strike && !this.gameExtended)
+      {
+        this.$store.dispatch("aSetTotalTries", this.totalTries + 2);
+      }
+      else
+      {
+          this.$store.dispatch("aSetTotalTries", this.totalTries + 1);
+      }
+    },
+    checkExtend() {
+      /*If we are at the last round and we get a spare or a strike,
+      award extra tries*/
+      if (
+        (this.latestEntry.spare || this.latestEntry.strike) &&
+        store.state.totalTries == store.state.maxTries &&
+        !this.gameExtended
+      ) {
+        this.extendGame(this.latestEntry);
+      }
+    },
+    extendGame(entry) {
+      if (entry.spare) {
+        this.$store.dispatch("aSetMaxTries", store.state.maxTries + 1);
+      } 
+      else {
+        this.$store.dispatch("aSetMaxTries", store.state.maxTries + 2); 
+      }
+      this.gameExtended = true;
     }
   },
+
   /*computed - properties does not get updated everytime we re-render -
   only when they have been affected. Often used when wanting to access
   results of state calculations.*/
-  computed: {}
+  computed: {},
 };
 </script>
 

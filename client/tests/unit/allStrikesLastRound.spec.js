@@ -10,14 +10,14 @@ localVue.use(Vuex)
 
 describe('AddScoreRecord.vue', () => {
 
-  it('Total score is 38', async () => {
+  it('Total score is 48', async () => {
     const wrapper = shallowMount(AddScoreRecord, {store, localVue})
 
-    const entryArr = [10,6,4,4,0]
+    const entryArr = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,10,10,10]
 
-    for(let i = 0; i < 5; i++){
+    for(let i = 0; i < entryArr.length; i++){
         await wrapper.vm.checkState(entryArr[i]) 
     }
-    expect(wrapper.vm.total).toBe(38)
+    expect(wrapper.vm.total).toBe(48)
   })
 })

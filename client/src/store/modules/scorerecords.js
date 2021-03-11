@@ -4,6 +4,7 @@ import Api from '@/services/Api'
 export const state = {
     totalScore: 0,
     totalTries: 0,
+    maxTries: 20,
     player: {
         entries: [],
         currTry: 0,
@@ -17,13 +18,11 @@ export const state = {
 };
 
 // Getters for state props
- export const getters = {
-
-};
+export const getters = {};
 
 // Run services on backend and commit changes with actions,
 // deciding which mutation function to be called for each variant.
-    const actions = {
+const actions = {
     async aCalculate({
         commit
     }, pinsHit) {
@@ -37,20 +36,30 @@ export const state = {
             console.log("Submitted")
         })
     },
-    aAddEntry({commit},entry){
+    aAddEntry({
+        commit
+    }, entry) {
         commit('mAddEntry', entry)
     },
-    aNextTry({commit}){
+    aNextTry({commit}) {
         commit('mNextTry')
     },
-    aResetTries({commit}){
-        commit('mResetTries')
+    aResetCurrTry({commit}) {
+        commit('mResetCurrTry')
     },
-    aIncTotalTries({commit}){
+    aIncTotalTries({commit}) {
         commit('mIncTotalTries')
     },
-    aCheckRound({commit}){
+    aCheckRound({commit}) {
         commit('mCheckRound')
+    },
+    aSetTotalTries({
+        commit
+    }, tryIndex) {
+        commit('mSetTotalTries', tryIndex)
+    },
+    aSetMaxTries({commit},max) {
+        commit('mSetMaxTries', max)
     }
 };
 
@@ -60,26 +69,32 @@ I commit most of these mutations from a method in "AddScoreRecord.vue"*/
 const mutations = {
     mCheckRound: (state) => {
         const strikeStatus = state.player.latestEntry.strike
-        if (state.player.currTry >= 2 || strikeStatus) {
+        if (state.player.currTry == 0 || strikeStatus) {
             state.player.currRound ++
         }
     },
-    mAddEntry: (state, entry) =>{
+    mAddEntry: (state, entry) => {
         state.player.latestEntry = entry
         state.player.entries.push(entry)
     },
-    mNextTry: (state) =>{
-        state.player.currTry++
+    mNextTry: (state) => {
+        state.player.currTry ++
     },
-    mResetTries: (state) =>{
+    mResetCurrTry: (state) => {
         state.player.currTry = 0
     },
-    mIncTotalTries: (state) =>{
-        state.totalTries++
+    mIncTotalTries: (state) => {
+        state.totalTries ++
     },
     mAddToTotal: (state, addToTotal) => {
         state.totalScore += addToTotal
         console.log("Total score is now: " + state.totalScore)
+    },
+    mSetTotalTries: (state, tryIndex) => {
+        state.totalTries = tryIndex
+    },
+    mSetMaxTries: (state, max) => {
+        state.maxTries = max
     }
 };
 
