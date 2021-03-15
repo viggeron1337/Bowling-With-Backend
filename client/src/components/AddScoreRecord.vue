@@ -11,16 +11,21 @@
     <div id="totalScore">
       <TotalScoreComponent :totalScore="this.total"></TotalScoreComponent>
     </div>
+    <div>
+      <BowlingSchemaComponent></BowlingSchemaComponent>
+    </div>
   </div>
 </template>
 
 <script>
 import TotalScoreComponent from "../components/TotalScore.vue";
 import store from "@/store/modules/scorerecords.js";
+import BowlingSchemaComponent from "../components/BowlingSchema.vue"
 export default {
   name: "AddScoreRecord",
   components: {
     TotalScoreComponent,
+    BowlingSchemaComponent
   },
   /*data - container for the data belonging to this component:
   needs to be returned from a function so that every new
@@ -146,8 +151,7 @@ export default {
   },
 
   /*computed - properties does not get updated everytime we re-render -
-  only when they have been affected. Often used when wanting to access
-  results of state calculations.*/
+  only when they have been affected.*/
   computed: {},
 };
 </script>

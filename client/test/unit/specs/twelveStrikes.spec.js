@@ -1,33 +1,26 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import AddScoreRecord from '@/components/AddScoreRecord.vue'
-import {store} from '@/store'
+import {AddScoreRecord} from '@/components/AddScoreRecord.vue'
+import {istore} from '@/store'
 
 Vue.use(Vuex)
 describe('AddScoreRecord.vue', () => {
 
-    const Component = Vue.extend(AddScoreRecord)
+    const Component = Vue.extend({AddScoreRecord})
+
+    var store = new Vuex.Store({istore})
+
     const vm = new Component({store}).$mount()
 
     var myCounter = class Counter {
         static counter = 0
     }
 
-    it('The result of 12 strikes should be 300', () => {
-        let promises = []
-        let responses = []
+    it('The result of 12 strikes should be 300', async () => {
         for (let i = 0; i < 12; i++) {
-            //vm.mCheckRound()
             console.log('Sending...')
-           /*   promises.push(vm.calculate(10).then((res) => {
-                //myCounter.counter += res.data.scoreContainer
-                //responses.push(res)
-            })) */
+         await vm.checkState(10)
         }
-      /* Promise.all(promises).then((res) =>
-        {
-          console.log(res)
-        }) */
         expect(myCounter.counter).to.equal(300)
     })
 })
