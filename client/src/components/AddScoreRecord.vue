@@ -19,8 +19,8 @@
 
 <script>
 import TotalScoreComponent from "../components/TotalScore.vue";
+import BowlingSchemaComponent from "../components/BowlingSchema.vue";
 import store from "@/store/modules/scorerecords.js";
-import BowlingSchemaComponent from "../components/BowlingSchema.vue"
 export default {
   name: "AddScoreRecord",
   components: {
