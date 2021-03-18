@@ -12,7 +12,9 @@
       <TotalScoreComponent :totalScore="this.total"></TotalScoreComponent>
     </div>
     <div>
-      <BowlingSchemaComponent></BowlingSchemaComponent>
+      <BowlingSchemaComponent
+        :updateTrigger="this.schemaUpdateTrigger"
+      ></BowlingSchemaComponent>
     </div>
   </div>
 </template>
@@ -25,7 +27,7 @@ export default {
   name: "AddScoreRecord",
   components: {
     TotalScoreComponent,
-    BowlingSchemaComponent
+    BowlingSchemaComponent,
   },
   /*data - container for the data belonging to this component:
   needs to be returned from a function so that every new
@@ -40,6 +42,7 @@ export default {
       totalTries: 0,
       gameExtended: false,
       activeButtons: 11,
+      schemaUpdateTrigger: 0
     };
   },
   /*methods - contains the methods of this component,
@@ -63,6 +66,9 @@ export default {
 
         /*Award extra turns if spare or strike on last turn*/
         this.checkExtend();
+
+        /*Trigger shcema update*/
+        this.schemaUpdateTrigger++;
       }
     },
     checkScoreType(pinsHit) {

@@ -11,7 +11,7 @@ export const state = {
         latestEntry: {
             pinsHit: 0,
             strike: false,
-            spare: false
+            spare: false,
         }
     }
 };

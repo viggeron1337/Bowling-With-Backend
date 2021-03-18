@@ -1,18 +1,25 @@
 <template>
   <div>
-    {{assignNewEntry}}
     <ul class="flex-container">
       <li v-for="index in 10" :key="index">
         <div class="scoreContainer" v-if="index < 10">
-          <span class="firstBall">{{schema[index - 1].first}}</span>
-          <span class="secondBall">{{schema[index - 1].second}}</span>
-          <div class="total">{{schema[index - 1].total}}</div>
+          <tr>
+            <td class="firstBall">{{ schema[index - 1].first }}</td>
+            <td class="secondBall">{{ schema[index - 1].second }}</td>
+          </tr>
+          <tr>
+            <div class="total">{{ schema[index - 1].total }}</div>
+          </tr>
         </div>
         <div class="scoreContainer" v-else>
-          <span class="firstBall">{{schema[index - 1].first}}</span>
-          <span class="secondBall">{{schema[index - 1].second}}</span>
-          <span class="bonusBall">{{schema[index - 1].bonus}}</span>
-          <div class="total">{{schema[index - 1].total}}</div>
+          <tr>
+            <td class="firstBall">{{ schema[index - 1].first }}</td>
+            <td class="secondBall">{{ schema[index - 1].second }}</td>
+            <td class="bonusBall">{{ schema[index - 1].bonus }}</td>
+          </tr>
+          <tr>
+            <td class="total">{{ schema[index - 1].total }}</td>
+          </tr>
         </div>
       </li>
     </ul>
@@ -28,63 +35,74 @@ export default {
     return {
       schema: [],
       schemaIndex: 0,
-      turn: 0,
+      turn: 1,
       bonusCounter: 0,
       bonusMax: 0,
-      extended: false
+      extended: false,
+      totalContainer: 0,
+      latestStrikeIdx: 0,
+      latestSpareIdx: 0,
+      spareEval: false,
+      strikeEval: false,
     };
   },
-  created: function() {
+  created: function () {
     for (let i = 0; i < 9; i++) {
       this.schema[i] = {
         first: "0",
         second: "0",
-        total: "0"
+        total: "0",
       };
       this.schema[9] = {
         first: "0",
         second: "0",
         bonus: "0",
-        total: "0"
+        total: "0",
       };
     }
-    this.created = true;
   },
-  computed: {
-    assignNewEntry: function() {
+  props: ["updateTrigger"],
+  watch: {
+    updateTrigger: function () {
+      /*These functions make changes to an array- and for vue to react to 
+      these changes, the array is changed using the wrapped array functions (splice in this case).*/
+      this.assignNewEntry();
+    },
+  },
+  methods: {
+    assignNewEntry() {
       const entry = store.state.player.latestEntry;
 
-      if (this.turn == 0) {
-        this.turn++;
-        return;
-      }
-      
-      if (this.schemaIndex < 9) {
+      if (this.schemaIndex < 10) {
         this.handleRounds(entry);
       } else {
         this.handleBonus(entry);
       }
-    }
-  },
-  methods: {
+    },
     handleRounds(entry) {
+      var newSchemaObj = this.schema[this.schemaIndex];
       if (this.turn == 1) {
         if (entry.strike) {
-          this.schema[this.schemaIndex].first = "X";
+          newSchemaObj.second = "X";
+          this.schema.splice(this.schemaIndex, 1, newSchemaObj);
           this.schemaIndex++;
-          return;
+        } else {
+          newSchemaObj.first = entry.pinsHit;
+          this.schema.splice(this.schemaIndex, 1, newSchemaObj);
+          this.turn++;
         }
-        this.schema[this.schemaIndex].first = entry.pinsHit;
-        this.turn++;
       } else if (this.turn == 2) {
         if (entry.spare) {
-          this.schema[this.schemaIndex].second = "/";
+          newSchemaObj.second = "/";
+          this.schema.splice(this.schemaIndex, 1, newSchemaObj);
         } else {
-          this.schema[this.schemaIndex].second = entry.pinsHit;
+          newSchemaObj.second = entry.pinsHit;
+          this.schema.splice(this.schemaIndex, 1, newSchemaObj);
         }
-        this.schemaIndex++;
         this.turn = 1;
+        this.schemaIndex++;
       }
+      this.updSchemaTotal();
     },
     handleBonus(entry) {
       if (this.bonusCounter <= this.bonusMax) {
@@ -92,55 +110,149 @@ export default {
           this.handleStrikeBonus();
         } else if (entry.spare) {
           this.handleSpareBonus();
-        } 
-        else{
+        } else {
           this.handleRegularBonus(entry);
         }
         this.turn++;
       }
     },
     handleStrikeBonus() {
+      var newSchemaObj = this.schema[this.schemaIndex];
       if (this.turn == 1) {
-        this.schema[this.schemaIndex].first = "X";
+        newSchemaObj.first = "X";
+        this.schema.splice(this.schemaIndex, 1, newSchemaObj);
         this.bonusMax = 2;
         this.bonusCounter++;
         this.extended = true;
       } else if (this.turn == 2) {
-        this.schema[this.schemaIndex].second = "X";
+        newSchemaObj.second = "X";
+        this.schema.splice(this.schemaIndex, 1, newSchemaObj);
         this.bonusCounter++;
       } else if (this.turn == 3) {
-        this.schema[this.schemaIndex].bonus = "X";
+        newSchemaObj.bonus = "X";
+        this.schema.splice(this.schemaIndex, 1, newSchemaObj);
         this.bonusCounter++;
       }
     },
     handleSpareBonus() {
+      var newSchemaObj = this.schema[this.schemaIndex];
       if (this.turn == 2) {
-        this.schema[this.schemaIndex].second = "/";
+        newSchemaObj.second = "/";
+        this.schema.splice(this.schemaIndex, 1, newSchemaObj);
         this.bonusMax = 1;
         this.bonusCounter++;
         this.extended = true;
       } else if (this.turn == 3) {
-        this.schema[this.schemaIndex].bonus = "/";
+        newSchemaObj.bonus = "/";
+        this.schema.splice(this.schemaIndex, 1, newSchemaObj);
         this.bonusCounter++;
       }
     },
     handleRegularBonus(entry) {
+      var newSchemaObj = this.schema[this.schemaIndex];
       if (this.turn == 1) {
-        this.schema[this.schemaIndex].first = entry.pinsHit;
-      } else if(this.turn == 2) {
-        this.schema[this.schemaIndex].second = entry.pinsHit;
+        newSchemaObj.first = entry.pinsHit;
+        this.schema.splice(this.schemaIndex, 1, newSchemaObj);
+      } else if (this.turn == 2) {
+        newSchemaObj.second = entry.pinsHit;
+        this.schema.splice(this.schemaIndex, 1, newSchemaObj);
         if (!this.extended) {
           this.bonusMax = -1;
         }
+      } else {
+        /*For last bonus ball if not spare or strike*/
+        newSchemaObj.bonus = entry.pinsHit;
+        this.schema.splice(this.schemaIndex, 1, newSchemaObj);
+        this.bonusCounter++;
       }
-      /*For last bonus ball if not spare or strike*/
-      else{
-          this.schema[this.schemaIndex].bonus = entry.pinsHit;
-          this.bonusCounter++;
+    },
+    updSchemaTotal() {
+      this.totalContainer = store.state.totalScore;
+
+      let entry = store.state.player.latestEntry;
+      var history = store.state.player.entries;
+      var updSchemaObj = {};
+      const historySize = history.length;
+
+      /*Regular update*/
+      if (!entry.spare && !entry.strike && this.turn == 1) {
+        console.log("schema Index: " + this.schemaIndex);
+        updSchemaObj = this.schema[this.schemaIndex - 1];
+        updSchemaObj.total = this.totalContainer;
+        this.schema.splice(this.schemaIndex - 1, 1, updSchemaObj);
+      }
+
+      var useIndex = 0;
+      /*Strike and Spare evaluation*/
+      if (historySize >= 3) {
+        /*Check if a strike score is to be displayed- find which*/
+        if (history[historySize - 3].strike) {
+          this.strikeEval = true;
+          console.log("Strike chekup");
+          for (let i = this.latestStrikeIdx; i < this.schema.length; i++) {
+            if (this.schema[i].second == "X") {
+              this.latestStrikeIdx = i + 1;
+              break;
+            }
+          }
+          useIndex = this.latestStrikeIdx - 1;
+          updSchemaObj = this.schema[useIndex];
+        }
+
+        /*Check if a spare score is to be displayed- find which*/
+        if (history[historySize - 2].spare) {
+          this.spareEval = true;
+          console.log("Spare eval");
+          for (let i = this.latestSpareIdx; i < this.schema.length; i++) {
+            if (this.schema[i].second == "/") {
+              this.latestSpareIdx = i + 1;
+              break;
+            }
+          }
+          useIndex = this.latestSpareIdx - 1;
+          updSchemaObj = this.schema[useIndex];
+        }
+
+        const ball1 = history[historySize - 2];
+        const ball2 = history[historySize - 1];
+
+        /*CHECK*/
+        if (this.strikeEval) {
+          console.log("strike");
+          if (ball2.spare) {
+            console.log("X V /");
+            this.totalContainer -= ball1.pinsHit;
+          } else if (!ball2.spare && !ball1.strike) {
+            console.log("X V V");
+            this.totalContainer -= ball1.pinsHit + ball2.pinsHit;
+          }
+          else if(!ball2.spare || !ball2.strike){
+            console.log("X X V")
+            this.totalContainer -= ball2.pinsHit; 
+          }
+           else {
+            console.log("X X X");
+          }
+          this.strikeEval = false;
+          updSchemaObj.total = this.totalContainer;
+          this.schema.splice(useIndex, 1, updSchemaObj);
+        } else if (this.spareEval) {
+          console.log("spare");
+          if (ball2.strike) {
+            //Do nothing
+            console.log("/ X")
+          } else {
+            console.log("/ V");
+            this.totalContainer -= entry.pinsHit;
+          }
+          this.spareEval = false;
+          updSchemaObj.total = this.totalContainer;
+          this.schema.splice(useIndex, 1, updSchemaObj);
         }
       }
-    }
-  };
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -157,6 +269,7 @@ export default {
 .firstBall {
   color: black;
   background-color: mediumseagreen;
+  display: table-cell;
 }
 .secondBall {
   color: black;
@@ -165,6 +278,7 @@ export default {
   border-bottom-width: 3px;
   border-block-color: rgba(0, 0, 0, 255);
   background-color: mediumseagreen;
+  display: table-cell;
 }
 .bonusBall {
   color: black;
@@ -172,13 +286,14 @@ export default {
   border-bottom-width: 3px;
   border-block-color: rgba(0, 0, 0, 255);
   background-color: mediumseagreen;
-  padding-right: 3%;
+  display: table-cell;
 }
 .total {
   position: inherit;
   color: black;
   border-block-color: rgba(0, 0, 0, 255);
   background-color: mediumseagreen;
+  display: table-cell;
 }
 .scoreContainer {
   display: inline-table;
