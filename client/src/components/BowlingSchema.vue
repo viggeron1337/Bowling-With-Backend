@@ -38,12 +38,17 @@ export default {
       turn: 1,
       bonusCounter: 0,
       bonusMax: 0,
+      noBonusOnFinal: false,
       extended: false,
       totalContainer: 0,
       latestStrikeIdx: 0,
       latestSpareIdx: 0,
-      spareEval: false,
-      strikeEval: false,
+      lastField: false,
+      history: [],
+      historySize: 0,
+      updSchemaObj: {},
+      totalTries: 0,
+      currEntry: {},
     };
   },
   created: function () {
@@ -64,7 +69,7 @@ export default {
   props: ["updateTrigger"],
   watch: {
     updateTrigger: function () {
-      /*These functions make changes to an array- and for vue to react to 
+      /*This function makes changes to an array- and for vue to react to 
       these changes, the array is changed using the wrapped array functions (splice in this case).*/
       this.assignNewEntry();
     },
@@ -73,8 +78,11 @@ export default {
     assignNewEntry() {
       const entry = store.state.player.latestEntry;
 
-      if (this.schemaIndex < 10) {
+      if (this.schemaIndex < 9) {
         this.handleRounds(entry);
+        if (this.schemaIndex == 9) {
+          this.lastField = true;
+        }
       } else {
         this.handleBonus(entry);
       }
@@ -89,7 +97,6 @@ export default {
         } else {
           newSchemaObj.first = entry.pinsHit;
           this.schema.splice(this.schemaIndex, 1, newSchemaObj);
-          this.turn++;
         }
       } else if (this.turn == 2) {
         if (entry.spare) {
@@ -99,8 +106,6 @@ export default {
           newSchemaObj.second = entry.pinsHit;
           this.schema.splice(this.schemaIndex, 1, newSchemaObj);
         }
-        this.turn = 1;
-        this.schemaIndex++;
       }
       this.updSchemaTotal();
     },
@@ -113,7 +118,7 @@ export default {
         } else {
           this.handleRegularBonus(entry);
         }
-        this.turn++;
+        this.updSchemaTotal();
       }
     },
     handleStrikeBonus() {
@@ -158,6 +163,7 @@ export default {
         this.schema.splice(this.schemaIndex, 1, newSchemaObj);
         if (!this.extended) {
           this.bonusMax = -1;
+          this.noBonusOnFinal = true;
         }
       } else {
         /*For last bonus ball if not spare or strike*/
@@ -167,88 +173,137 @@ export default {
       }
     },
     updSchemaTotal() {
+      /*Get the raw total score*/
       this.totalContainer = store.state.totalScore;
 
-      let entry = store.state.player.latestEntry;
-      var history = store.state.player.entries;
-      var updSchemaObj = {};
-      const historySize = history.length;
+      /*If this is the last turn in the last field, just use the 
+      raw total score to display*/
+      if (!this.checkLastTurn()) {
+        this.currEntry = store.state.player.latestEntry;
 
-      /*Regular update*/
-      if (!entry.spare && !entry.strike && this.turn == 1) {
-        console.log("schema Index: " + this.schemaIndex);
-        updSchemaObj = this.schema[this.schemaIndex - 1];
-        updSchemaObj.total = this.totalContainer;
-        this.schema.splice(this.schemaIndex - 1, 1, updSchemaObj);
+        /*Symbol explanations
+      V - Value 
+      / - Spare
+      X - Strike
+      */
+
+        /*Regular update - after a round finishes (V V).*/
+        this.regularEval();
+
+        this.historySize = store.state.player.entries.length;
+
+        /*Strike and Spare evaluation can only happen on or after turn 3*/
+        if (this.historySize >= 3) {
+          this.strikeEval();
+          this.spareEval();
+        }
+        /*Check if game should move on to next schema field
+      and update current turn.*/
+        this.checkReset();
+      }
+    },
+    checkLastTurn() {
+      if (this.lastField && this.turn == 3) {
+        this.schema[this.schemaIndex].total = this.totalContainer;
+        return true;
+      }
+      return false;
+    },
+    regularEval() {
+      if (
+        !this.currEntry.spare &&
+        !this.currEntry.strike &&
+        this.turn == 2 &&
+        !this.lastField || this.noBonusOnFinal /*<--- In case we have failed to get a bonus, we want to show the final score*/
+      ) {
+        this.updSchemaObj = this.schema[this.schemaIndex];
+        this.updSchemaObj.total = this.totalContainer;
+        this.schema.splice(this.schemaIndex, 1, this.updSchemaObj);
+      }
+    },
+    strikeEval() {
+      this.history = store.state.player.entries;
+      /*Check if a strike score is to be displayed- find which*/
+      if (this.history[this.historySize - 3].strike) {
+        for (let i = this.latestStrikeIdx; i < this.schema.length; i++) {
+          if (this.schema[i].second == "X") {
+            this.latestStrikeIdx = i + 1;
+            break;
+          }
+        }
+        this.useIndex = this.latestStrikeIdx - 1;
+        this.updSchemaObj = this.schema[this.useIndex];
+
+        /*Since this.totalScoreContainer contains more score 
+        than what is to be shown, we have to deduct the 
+        excess score here...(Same for spare)*/
+
+        /*Only remove the excess if we are not on the 
+          extended bonus rounds - since those never add to the total untill
+          all turns are done... (Same for spare)*/
+        this.totalTries = store.state.totalTries;
+        if (this.totalTries <= 20) {
+          const ball1 = this.history[this.historySize - 2];
+          const ball2 = this.history[this.historySize - 1];
+
+          /*X V V*/
+          if (!ball1.strike && !ball2.spare) {
+            this.totalContainer -= ball1.pinsHit + ball2.pinsHit;
+          } else if (!ball1.strike && ball2.spare) {
+            /*X V /*/
+            this.totalContainer -= ball1.pinsHit;
+          } else if (ball1.strike && !ball2.strike) {
+            /*X X V*/
+            this.totalContainer -= ball2.pinsHit;
+          }
+          /*X X X*/
+        }
+        this.updSchemaObj.total = this.totalContainer;
+        this.schema.splice(this.useIndex, 1, this.updSchemaObj);
+      }
+    },
+    spareEval() {
+      this.history = store.state.player.entries;
+      /*Check if a spare score is to be displayed- find which*/
+      if (this.history[this.historySize - 2].spare) {
+        for (let i = this.latestSpareIdx; i < this.schema.length; i++) {
+          if (this.schema[i].second == "/") {
+            this.latestSpareIdx = i + 1;
+            break;
+          }
+        }
+        this.useIndex = this.latestSpareIdx - 1;
+        this.updSchemaObj = this.schema[this.useIndex];
+
+        this.totalTries = store.state.totalTries;
+
+        if (this.totalTries <= 20) {
+          const ball1 = this.history[this.historySize - 1];
+          /*/ V*/
+          if (!ball1.strike) {
+            this.totalContainer -= ball1.pinsHit;
+          }
+          /*/ X*/
+        }
+
+        this.updSchemaObj.total = this.totalContainer;
+        this.schema.splice(this.useIndex, 1, this.updSchemaObj);
+      }
+    },
+    checkReset() {
+      /*If entry was a strike, reset turn to 1, 
+      else go to next turn. (Prevent from resetting on last field)*/
+      if (this.currEntry.strike && !this.lastField) {
+        this.turn = 1;
+      } else {
+        this.turn++;
       }
 
-      var useIndex = 0;
-      /*Strike and Spare evaluation*/
-      if (historySize >= 3) {
-        /*Check if a strike score is to be displayed- find which*/
-        if (history[historySize - 3].strike) {
-          this.strikeEval = true;
-          console.log("Strike chekup");
-          for (let i = this.latestStrikeIdx; i < this.schema.length; i++) {
-            if (this.schema[i].second == "X") {
-              this.latestStrikeIdx = i + 1;
-              break;
-            }
-          }
-          useIndex = this.latestStrikeIdx - 1;
-          updSchemaObj = this.schema[useIndex];
-        }
-
-        /*Check if a spare score is to be displayed- find which*/
-        if (history[historySize - 2].spare) {
-          this.spareEval = true;
-          console.log("Spare eval");
-          for (let i = this.latestSpareIdx; i < this.schema.length; i++) {
-            if (this.schema[i].second == "/") {
-              this.latestSpareIdx = i + 1;
-              break;
-            }
-          }
-          useIndex = this.latestSpareIdx - 1;
-          updSchemaObj = this.schema[useIndex];
-        }
-
-        const ball1 = history[historySize - 2];
-        const ball2 = history[historySize - 1];
-
-        /*CHECK*/
-        if (this.strikeEval) {
-          console.log("strike");
-          if (ball2.spare) {
-            console.log("X V /");
-            this.totalContainer -= ball1.pinsHit;
-          } else if (!ball2.spare && !ball1.strike) {
-            console.log("X V V");
-            this.totalContainer -= ball1.pinsHit + ball2.pinsHit;
-          }
-          else if(!ball2.spare || !ball2.strike){
-            console.log("X X V")
-            this.totalContainer -= ball2.pinsHit; 
-          }
-           else {
-            console.log("X X X");
-          }
-          this.strikeEval = false;
-          updSchemaObj.total = this.totalContainer;
-          this.schema.splice(useIndex, 1, updSchemaObj);
-        } else if (this.spareEval) {
-          console.log("spare");
-          if (ball2.strike) {
-            //Do nothing
-            console.log("/ X")
-          } else {
-            console.log("/ V");
-            this.totalContainer -= entry.pinsHit;
-          }
-          this.spareEval = false;
-          updSchemaObj.total = this.totalContainer;
-          this.schema.splice(useIndex, 1, updSchemaObj);
-        }
+      /*If turn is greater than 2 - reset turn 
+      and go to the next field in the bowling schema. (Prevent from resetting on last field)*/
+      if (this.turn > 2 && !this.lastField) {
+        this.turn = 1;
+        this.schemaIndex++;
       }
     },
   },
