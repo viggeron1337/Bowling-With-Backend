@@ -50,6 +50,9 @@ const actions = {
     },
     aSetMaxTries({commit}, max) {
         commit('mSetMaxTries', max)
+    },
+    aResetState({commit}){
+        commit('mResetState')
     }
 };
 
@@ -77,6 +80,18 @@ const mutations = {
     },
     mSetMaxTries: (state, max) => {
         state.maxTries = max
+    },
+    mResetState: (state) => {
+        state.totalScore = 0
+        state.totalTries = 0
+        state.maxTries = 20
+        state.player.entries = []
+        state.player.currTry = 0,
+        state.player.latestEntry = {
+            pinsHit: 0,
+            strike: false,
+            spare: false,
+        }
     }
 };
 

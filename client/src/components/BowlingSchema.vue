@@ -23,14 +23,20 @@
         </div>
       </li>
     </ul>
+    <div>
+      <ResetSchema @reset="onResetClickChild"></ResetSchema>
+    </div>
   </div>
 </template>
 
 <script>
 import store from "@/store/modules/scorerecords.js";
+import ResetSchema from "@/components/ResetSchema.vue";
 export default {
   name: "BowlingSchema",
-
+  components: {
+    ResetSchema,
+  },
   data() {
     return {
       schema: [],
@@ -48,36 +54,36 @@ export default {
       historySize: 0,
       updSchemaObj: {},
       totalTries: 0,
-      currEntry: {}
+      currEntry: {},
     };
   },
-  created: function() {
+  created: function () {
     for (let i = 0; i < 9; i++) {
       this.schema[i] = {
         first: "0",
         second: "0",
-        total: "0"
+        total: "0",
       };
       this.schema[9] = {
         first: "0",
         second: "0",
         bonus: "0",
-        total: "0"
+        total: "0",
       };
     }
   },
   props: ["updateTrigger"],
   watch: {
-    updateTrigger: function() {
+    updateTrigger: function () {
       /*This function makes changes to an array- and for vue to react to 
       these changes, the array is changed using the wrapped array functions (splice in this case).*/
       this.assignNewEntry();
-    }
+    },
   },
   methods: {
     assignNewEntry() {
       const entry = store.state.player.latestEntry;
-
+      
       if (this.schemaIndex < 9) {
         this.handleRounds(entry);
         if (this.schemaIndex == 9) {
@@ -207,7 +213,8 @@ export default {
           !this.currEntry.strike &&
           this.turn == 2 &&
           !this.lastField) ||
-        this.noBonusOnFinal /*<--- In case we have failed to get a bonus, we want to show 
+        this
+          .noBonusOnFinal /*<--- In case we have failed to get a bonus, we want to show 
         the final score on last fields turn 2*/
       ) {
         this.updSchemaObj = this.schema[this.schemaIndex];
@@ -299,26 +306,72 @@ export default {
         this.turn = 1;
         this.schemaIndex++;
       }
-    }
-  }
+    },
+    onResetClickChild() {
+      /*Reset the schema visually*/
+      this.resetSchemaItems();
+      /*Reset the local data*/
+      this.resetLocalData();
+      /*Dispatch action to reset the state*/
+      this.$store.dispatch("aResetState");
+      /*emit event to reset the local data of AddScoreRecords component.*/
+      this.$emit("reset")
+    },
+    resetSchemaItems() {
+      for (let i = 0; i < this.schema.length; i++) {
+        this.schema.splice(i, 1, {
+          first: "0",
+          second: "0",
+          total: "0",
+        });
+        this.schema.splice(9, 1, {
+          first: "0",
+          second: "0",
+          bonus: "0",
+          total: "0",
+        });
+      }
+    },
+    resetLocalData() {
+      this.schemaIndex = 0;
+      this.turn = 1;
+      this.bonusCounter = 0;
+      this.bonusMax = 0; 
+      this.noBonusOnFinal = false;
+      this.totalContainer = 0;
+      this.latestStrikeIdx = 0;
+      this.latestSpareIdx = 0;
+      this.history = [], 
+      this.historySize = 0;
+      this.updSchemaObj = {};
+      this.extended = false;
+      this.lastField = false;
+      this.currEntry = {}, 
+      this.totalTries = 0;
+    },
+  },
 };
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Teko:wght@300&display=swap');
 .flex-container {
+  position: relative;
+  align-self: center;
   list-style-type: none;
   flex-direction: row;
   display: inline-flex;
   border: 1em #4abc41;
   border-style: inset;
-  padding-right: 0px;
   padding-left: 0px;
+  transform-origin: center;
   transform: scaleX(2);
 }
 .firstBall {
   color: black;
   background-color: mediumseagreen;
   display: table-cell;
+  font-family: 'Teko', sans-serif;
 }
 .secondBall {
   color: black;
@@ -328,6 +381,7 @@ export default {
   border-block-color: rgba(0, 0, 0, 255);
   background-color: mediumseagreen;
   display: table-cell;
+  font-family: 'Teko', sans-serif;
 }
 .bonusBall {
   color: black;
@@ -336,6 +390,7 @@ export default {
   border-block-color: rgba(0, 0, 0, 255);
   background-color: mediumseagreen;
   display: table-cell;
+  font-family: 'Teko', sans-serif;
 }
 .total {
   position: inherit;
@@ -343,6 +398,7 @@ export default {
   border-block-color: rgba(0, 0, 0, 255);
   background-color: mediumseagreen;
   display: table-cell;
+  font-family: 'Teko', sans-serif;
 }
 .scoreContainer {
   display: inline-table;

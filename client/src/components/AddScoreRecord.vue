@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h2>Enter Turn Score</h2>
     <ul>
       <li v-for="index in this.activeButtons" :key="index">
         <button v-on:click="checkState(index - 1)" type="button">
@@ -14,6 +13,7 @@
     <div>
       <BowlingSchemaComponent
         :updateTrigger="this.schemaUpdateTrigger"
+        @reset="onResetClickChild"
       ></BowlingSchemaComponent>
     </div>
   </div>
@@ -42,7 +42,7 @@ export default {
       totalTries: 0,
       gameExtended: false,
       activeButtons: 11,
-      schemaUpdateTrigger: 0
+      schemaUpdateTrigger: 0,
     };
   },
   /*methods - contains the methods of this component,
@@ -154,6 +154,13 @@ export default {
         this.activeButtons = 11;
       }
     },
+    onResetClickChild() {
+      this.total = 0;
+      this.totalTries = 0;
+      this.activeButtons = 11;
+      this.gameExtended = false;
+      this.latestEntry = {};
+    },
   },
 
   /*computed - properties does not get updated everytime we re-render -
@@ -163,19 +170,23 @@ export default {
 </script>
 
 <style scoped>
-h2 {
-  position: static;
-  padding: 20px 50.5px;
-  background: rgb(42, 48, 53);
-  color: rgb(65, 148, 107);
-}
+@import url("https://fonts.googleapis.com/css2?family=Teko:wght@300&display=swap");
 ul {
-  position: relative;
+  align-self: center;
   list-style-type: none;
   display: inline-flex;
   flex-direction: row;
+  transform-origin: left;
 }
 li {
-  padding-left: 4.5px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+button {
+  font-family: "Teko", sans-serif;
+  transform: scale(1.5, 1.5);
+  border-radius: 25px;
+  background-color: thistle;
+  border-color: rgb(94, 82, 82);
 }
 </style>
