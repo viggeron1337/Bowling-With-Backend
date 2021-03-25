@@ -1,7 +1,7 @@
 <template>
-  <div>
+  <span>
       <button id = "resetButton" v-on:click="resetSchema()" type="button">Reset</button>
-  </div>
+  </span>
 </template>
 
 <script>
@@ -19,8 +19,8 @@ methods: {
 @import url('https://fonts.googleapis.com/css2?family=Teko:wght@300&display=swap');
 
 #resetButton{
-    position: relative;
-    bottom: 5px;
+    position:relative;
+    bottom: 7px;
     background-color: rgb(32, 117, 32);
     border-width: medium;
     border-radius: 25px;
