@@ -12,7 +12,9 @@
     </div>
     <div>
       <BowlingSchemaComponent
-        :updateTrigger="this.schemaUpdateTrigger"
+        v-for="index in this.numOfPlayers"
+        :key="index"
+        :updateTrigger="schemaUpdateTrigger"
         @reset="onResetClickChild"
       ></BowlingSchemaComponent>
     </div>
@@ -40,18 +42,31 @@ export default {
       total: 0,
       allPins: 10,
       totalTries: 0,
-      gameExtended: false,
+      gameExtended: [],
       activeButtons: 11,
       schemaUpdateTrigger: 0,
+      numOfPlayers: 0,
+      players: [],
+      currPlayerID: 0,
     };
+  },
+  created() {
+    this.numOfPlayers = store.state.players.length;
+    this.players = store.state.players;
+
+    for (let i = 0; i < 4; i++) {
+      this.gameExtended[i] = false;
+    }
   },
   /*methods - contains the methods of this component,
   allows for parameters as opposed to computed*/
   methods: {
     async checkState(pinsHit) {
-      this.totalTries = store.state.totalTries;
+      this.players = store.state.players;
+      this.currPlayerID = store.state.playerID;
+      this.totalTries = this.players[this.currPlayerID].totalTries;
 
-      if (this.totalTries < store.state.maxTries) {
+      if (this.totalTries < this.players[this.currPlayerID].maxTries) {
         /*Set the current try*/
         this.$store.dispatch("aNextTry");
 
@@ -66,7 +81,7 @@ export default {
 
         /*Award extra turns if spare or strike on last turn*/
         this.checkExtend();
-
+        
         /*Trigger shcema update*/
         this.schemaUpdateTrigger++;
       }
@@ -76,7 +91,7 @@ export default {
       var entry = this.createEntry(pinsHit);
 
       //Fetch current try.
-      const currTry = store.state.player.currTry;
+      const currTry = this.players[this.currPlayerID].currTry;
 
       /*Check if strike*/
       if (pinsHit == this.allPins) {
@@ -111,15 +126,16 @@ export default {
         /*After score has been registered, increase total tires and
         print new total. Use the latest entry to determine how many tries 
         should be skipped.*/
-        this.latestEntry = store.state.player.latestEntry;
+        this.latestEntry = this.players[this.currPlayerID].latestEntry;
         this.updateTotalTryIndex(this.latestEntry);
-        this.total = store.state.totalScore;
+        this.total = this.players[this.currPlayerID].totalScore;
         console.log("Done!");
       });
     },
     updateTotalTryIndex(entry) {
       /*Aslong as the game has not been extended, a strike counts as 2 tries*/
-      if (entry.strike && !this.gameExtended) {
+      if (entry.strike && !this.gameExtended[this.currPlayerID]) {
+        console.log("2 tries addded!")
         this.$store.dispatch("aSetTotalTries", this.totalTries + 2);
       } else {
         this.$store.dispatch("aSetTotalTries", this.totalTries + 1);
@@ -128,26 +144,28 @@ export default {
     checkExtend() {
       /*If we are at the last round and we get a spare or a strike,
       award extra tries*/
+      this.totalTries = this.players[this.currPlayerID].totalTries
       if (
         (this.latestEntry.spare || this.latestEntry.strike) &&
-        store.state.totalTries == store.state.maxTries &&
-        !this.gameExtended
+        this.totalTries == this.players[this.currPlayerID].maxTries &&
+        !this.gameExtended[this.currPlayerID]
       ) {
+        console.log("Game extended!");
         this.extendGame(this.latestEntry);
       }
     },
     extendGame(entry) {
       if (entry.spare) {
-        this.$store.dispatch("aSetMaxTries", store.state.maxTries + 1);
+        this.$store.dispatch("aSetMaxTries", this.players[this.currPlayerID].maxTries + 1);
       } else {
-        this.$store.dispatch("aSetMaxTries", store.state.maxTries + 2);
+        this.$store.dispatch("aSetMaxTries", this.players[this.currPlayerID].maxTries + 2);
       }
-      this.gameExtended = true;
+      this.gameExtended[this.currPlayerID] = true;
     },
     adjustButtons(pinsHit) {
       if (
-        store.state.player.currTry == 1 &&
-        this.totalTries != store.state.maxTries - 1
+        this.players[this.currPlayerID].currTry == 1 &&
+        this.totalTries != this.players[this.currPlayerID].maxTries - 1
       ) {
         this.activeButtons -= pinsHit;
       } else {
@@ -158,7 +176,9 @@ export default {
       this.total = 0;
       this.totalTries = 0;
       this.activeButtons = 11;
-      this.gameExtended = false;
+      for (let i = 0; i < 4; i++) {
+        this.gameExtended[i] = false;
+      }
       this.latestEntry = {};
     },
   },

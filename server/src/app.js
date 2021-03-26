@@ -21,7 +21,7 @@ app.put('/calculateTotal', function (req, res) {
     const historySize = calcTotal.player.entries.length
     const currEntry = calcTotal.player.latestEntry
     const pinsHit = calcTotal.pins
-    const totalTries = calcTotal.totalTries
+    const totalTries = calcTotal.player.totalTries
 
     const bonusLimit = 20
     const maxPins = 10

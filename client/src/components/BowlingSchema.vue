@@ -55,6 +55,8 @@ export default {
       updSchemaObj: {},
       totalTries: 0,
       currEntry: {},
+      currPlayerID: 0,
+      players: []
     };
   },
   created: function () {
@@ -82,8 +84,10 @@ export default {
   },
   methods: {
     assignNewEntry() {
-      const entry = store.state.player.latestEntry;
-      
+      this.players = store.state.players;
+      this.currPlayerID = store.state.playerID;
+      const entry = this.players[this.currPlayerID].latestEntry;
+
       if (this.schemaIndex < 9) {
         this.handleRounds(entry);
         if (this.schemaIndex == 9) {
@@ -172,12 +176,12 @@ export default {
     },
     updSchemaTotal() {
       /*Get the raw total score*/
-      this.totalContainer = store.state.totalScore;
+      this.totalContainer = this.players[this.currPlayerID].totalScore;
 
       /*If this is the last turn in the last field, just use the 
       raw total score to display*/
       if (!this.checkLastTurn()) {
-        this.currEntry = store.state.player.latestEntry;
+        this.currEntry = this.players[this.currPlayerID].latestEntry;
 
         /*Symbol explanations
       V - Value 
@@ -188,7 +192,7 @@ export default {
         /*Regular update - after a round finishes (V V).*/
         this.regularEval();
 
-        this.historySize = store.state.player.entries.length;
+        this.historySize = this.players[this.currPlayerID].entries.length;
 
         /*Strike and Spare evaluation can only happen on or after turn 3*/
         if (this.historySize >= 3) {
@@ -223,7 +227,7 @@ export default {
       }
     },
     strikeEval() {
-      this.history = store.state.player.entries;
+      this.history = this.players[this.currPlayerID].entries;
       /*Check if a strike score is to be displayed- find which*/
       if (this.history[this.historySize - 3].strike) {
         for (let i = this.latestStrikeIdx; i < this.schema.length; i++) {
@@ -242,7 +246,7 @@ export default {
         /*Only remove the excess if we are not on the 
           extended bonus rounds - since those never add to the total untill
           all turns are done... (Same for spare)*/
-        this.totalTries = store.state.totalTries;
+        this.totalTries = this.players[this.currPlayerID].totalTries;
         if (this.totalTries <= 20) {
           const ball1 = this.history[this.historySize - 2];
           const ball2 = this.history[this.historySize - 1];
@@ -264,7 +268,7 @@ export default {
       }
     },
     spareEval() {
-      this.history = store.state.player.entries;
+      this.history = this.players[this.currPlayerID].entries;
       /*Check if a spare score is to be displayed- find which*/
       if (this.history[this.historySize - 2].spare) {
         for (let i = this.latestSpareIdx; i < this.schema.length; i++) {
@@ -276,7 +280,7 @@ export default {
         this.useIndex = this.latestSpareIdx - 1;
         this.updSchemaObj = this.schema[this.useIndex];
 
-        this.totalTries = store.state.totalTries;
+        this.totalTries = this.players[this.currPlayerID].totalTries;
 
         if (this.totalTries <= 20) {
           const ball1 = this.history[this.historySize - 1];
@@ -315,7 +319,7 @@ export default {
       /*Dispatch action to reset the state*/
       this.$store.dispatch("aResetState");
       /*emit event to reset the local data of AddScoreRecords component.*/
-      this.$emit("reset")
+      this.$emit("reset");
     },
     resetSchemaItems() {
       for (let i = 0; i < this.schema.length; i++) {
@@ -336,25 +340,23 @@ export default {
       this.schemaIndex = 0;
       this.turn = 1;
       this.bonusCounter = 0;
-      this.bonusMax = 0; 
+      this.bonusMax = 0;
       this.noBonusOnFinal = false;
       this.totalContainer = 0;
       this.latestStrikeIdx = 0;
       this.latestSpareIdx = 0;
-      this.history = [], 
-      this.historySize = 0;
+      (this.history = []), (this.historySize = 0);
       this.updSchemaObj = {};
       this.extended = false;
       this.lastField = false;
-      this.currEntry = {}, 
-      this.totalTries = 0;
+      (this.currEntry = {}), (this.totalTries = 0);
     },
   },
 };
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Teko:wght@300&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Teko:wght@300&display=swap");
 .flex-container {
   position: relative;
   align-self: center;
@@ -371,7 +373,7 @@ export default {
   color: black;
   background-color: mediumseagreen;
   display: table-cell;
-  font-family: 'Teko', sans-serif;
+  font-family: "Teko", sans-serif;
 }
 .secondBall {
   color: black;
@@ -381,7 +383,7 @@ export default {
   border-block-color: rgba(0, 0, 0, 255);
   background-color: mediumseagreen;
   display: table-cell;
-  font-family: 'Teko', sans-serif;
+  font-family: "Teko", sans-serif;
 }
 .bonusBall {
   color: black;
@@ -390,7 +392,7 @@ export default {
   border-block-color: rgba(0, 0, 0, 255);
   background-color: mediumseagreen;
   display: table-cell;
-  font-family: 'Teko', sans-serif;
+  font-family: "Teko", sans-serif;
 }
 .total {
   position: inherit;
@@ -398,7 +400,7 @@ export default {
   border-block-color: rgba(0, 0, 0, 255);
   background-color: mediumseagreen;
   display: table-cell;
-  font-family: 'Teko', sans-serif;
+  font-family: "Teko", sans-serif;
 }
 .scoreContainer {
   display: inline-table;

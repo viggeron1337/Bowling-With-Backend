@@ -2,18 +2,21 @@ import Api from '@/services/Api'
 
 // State container for the application
 export const state = {
-    totalScore: 0,
-    totalTries: 0,
-    maxTries: 20,
-    player: {
-        entries: [],
-        currTry: 0,
-        latestEntry: {
-            pinsHit: 0,
-            strike: false,
-            spare: false,
+    playerID: 0,
+    players: [
+        {
+            totalScore: 0,
+            totalTries: 0,
+            maxTries: 20,
+            entries: [],
+            currTry: 0,
+            latestEntry: {
+                pinsHit: 0,
+                strike: false,
+                spare: false
+            }
         }
-    }
+    ]
 };
 
 // Getters for state props
@@ -22,18 +25,21 @@ export const getters = {};
 // Run services on backend and commit changes with actions,
 // deciding which mutation function to be called for each variant.
 const actions = {
-    async aCalculate({commit}, pinsHit) {
+    async aCalculate({
+        commit
+    }, pinsHit) {
         var calcTotal = {
             pins: pinsHit,
-            totalTries: state.totalTries,
-            player: state.player
+            player: state.players[state.playerID]
         }
         await Api().put('calculateTotal', calcTotal).then((res) => {
             commit('mAddToTotal', res.data.scoreContainer)
             console.log("Submitted")
         })
     },
-    aAddEntry({commit}, entry) {
+    aAddEntry({
+        commit
+    }, entry) {
         commit('mAddEntry', entry)
     },
     aNextTry({commit}) {
@@ -45,13 +51,20 @@ const actions = {
     aIncTotalTries({commit}) {
         commit('mIncTotalTries')
     },
-    aSetTotalTries({commit}, tryIndex) {
+    aSetTotalTries({
+        commit
+    }, tryIndex) {
         commit('mSetTotalTries', tryIndex)
     },
-    aSetMaxTries({commit}, max) {
+    aNextPlayer({commit}) {
+        commit("mNextPlayer")
+    },
+    aSetMaxTries({
+        commit
+    }, max) {
         commit('mSetMaxTries', max)
     },
-    aResetState({commit}){
+    aResetState({commit}) {
         commit('mResetState')
     }
 };
@@ -59,38 +72,46 @@ const actions = {
 /*Submit to state via mutations.*/
 const mutations = {
     mAddEntry: (state, entry) => {
-        state.player.latestEntry = entry
-        state.player.entries.push(entry)
+        state.players[state.playerID].latestEntry = entry
+        state.players[state.playerID].entries.push(entry)
     },
     mNextTry: (state) => {
-        state.player.currTry ++
+        state.players[state.playerID].currTry ++
     },
     mResetCurrTry: (state) => {
-        state.player.currTry = 0
+        state.players[state.playerID].currTry = 0
     },
     mIncTotalTries: (state) => {
-        state.totalTries ++
+        state.players[state.playerID].totalTries ++
     },
     mAddToTotal: (state, addToTotal) => {
-        state.totalScore += addToTotal
-        console.log("Total score is now: " + state.totalScore)
+        state.players[state.playerID].totalScore += addToTotal
+        console.log("Total score is now: " + state.players[state.playerID].totalScore)
     },
     mSetTotalTries: (state, tryIndex) => {
-        state.totalTries = tryIndex
+        state.players[state.playerID].totalTries = tryIndex
+    },
+    mNextPlayer: (state) => {
+        state.playerID ++
+        state.playerID %= state.players.length;
     },
     mSetMaxTries: (state, max) => {
-        state.maxTries = max
+        state.players[state.playerID].maxTries = max
     },
     mResetState: (state) => {
-        state.totalScore = 0
-        state.totalTries = 0
-        state.maxTries = 20
-        state.player.entries = []
-        state.player.currTry = 0,
-        state.player.latestEntry = {
-            pinsHit: 0,
-            strike: false,
-            spare: false,
+        const size = state.players.length;
+        state.playerID = 0;
+        for (let i = 0; i < size; i++) {
+            state.players[i].totalScore = 0
+            state.players[i].totalTries = 0
+            state.players[i].maxTries = 20
+            state.players[i].entries = []
+            state.players[i].currTry = 0,
+            state.players[i].latestEntry = {
+                pinsHit: 0,
+                strike: false,
+                spare: false
+            }
         }
     }
 };
