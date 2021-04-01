@@ -81,7 +81,6 @@ export default {
       these changes, the array is changed using the wrapped array functions (splice in this case).*/
       deep: true,
       handler() {
-        console.log("Triggered!");
         this.assignNewEntry();
       }
     }
@@ -304,6 +303,7 @@ export default {
       else go to next turn. (Prevent from resetting on last field)*/
       if (this.currEntry.strike && !this.lastField) {
         this.turn = 1;
+        this.$store.dispatch("aNextPlayer");
       } else {
         this.turn++;
       }
@@ -313,6 +313,7 @@ export default {
       if (this.turn > 2 && !this.lastField) {
         this.turn = 1;
         this.schemaIndex++;
+        this.$store.dispatch("aNextPlayer");
       }
     },
     onResetClickChild() {

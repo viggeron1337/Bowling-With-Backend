@@ -15,6 +15,17 @@ export const state = {
                 strike: false,
                 spare: false
             }
+        }, {
+            totalScore: 0,
+            totalTries: 0,
+            maxTries: 20,
+            entries: [],
+            currTry: 0,
+            latestEntry: {
+                pinsHit: 0,
+                strike: false,
+                spare: false
+            }
         }
     ]
 };
@@ -59,6 +70,9 @@ const actions = {
     aNextPlayer({commit}) {
         commit("mNextPlayer")
     },
+    aRemovePlayer({commit}) {
+        commit("mRemovePlayer")
+    },
     aSetMaxTries({
         commit
     }, max) {
@@ -94,6 +108,9 @@ const mutations = {
     mNextPlayer: (state) => {
         state.playerID ++
         state.playerID %= state.players.length;
+    },
+    mRemovePlayer: (state) => {
+        state.players.shift();
     },
     mSetMaxTries: (state, max) => {
         state.players[state.playerID].maxTries = max

@@ -10,11 +10,10 @@
     <div id="totalScore">
       <TotalScoreComponent :totalScore="this.total"></TotalScoreComponent>
     </div>
-    <div>
+    <div v-for="(item,index) in this.numOfPlayers"
+        :key="index">
       <BowlingSchemaComponent
-        v-for="index in this.numOfPlayers"
-        :key="index"
-        :updateTrigger="schemaUpdateTrigger[currPlayerID + (index - 1)]"
+        :updateTrigger="schemaUpdateTrigger[index]"
         @reset="onResetClickChild"
       ></BowlingSchemaComponent>
     </div>
@@ -51,7 +50,7 @@ export default {
     };
   },
   created() {
-    this.numOfPlayers = store.state.players.length * 2;
+    this.numOfPlayers = store.state.players.length;
     this.players = store.state.players;
 
     for (let i = 0; i < 4; i++) {
@@ -67,9 +66,7 @@ export default {
       this.totalTries = this.players[this.currPlayerID].totalTries;
 
       if (this.totalTries < this.players[this.currPlayerID].maxTries) {
-       
-       console.log("Curr ID: " + this.currPlayerID);
-
+  
         /*Set the current try*/
         this.$store.dispatch("aNextTry");
 
@@ -139,7 +136,6 @@ export default {
     updateTotalTryIndex(entry) {
       /*Aslong as the game has not been extended, a strike counts as 2 tries*/
       if (entry.strike && !this.gameExtended[this.currPlayerID]) {
-        console.log("2 tries addded!")
         this.$store.dispatch("aSetTotalTries", this.totalTries + 2);
       } else {
         this.$store.dispatch("aSetTotalTries", this.totalTries + 1);
