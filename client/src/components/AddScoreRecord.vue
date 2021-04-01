@@ -14,7 +14,7 @@
       <BowlingSchemaComponent
         v-for="index in this.numOfPlayers"
         :key="index"
-        :updateTrigger="schemaUpdateTrigger"
+        :updateTrigger="schemaUpdateTrigger[currPlayerID]"
         @reset="onResetClickChild"
       ></BowlingSchemaComponent>
     </div>
@@ -44,14 +44,14 @@ export default {
       totalTries: 0,
       gameExtended: [],
       activeButtons: 11,
-      schemaUpdateTrigger: 0,
+      schemaUpdateTrigger: [0,0,0,0],
       numOfPlayers: 0,
       players: [],
       currPlayerID: 0,
     };
   },
   created() {
-    this.numOfPlayers = store.state.players.length;
+    this.numOfPlayers = store.state.players.length * 2;
     this.players = store.state.players;
 
     for (let i = 0; i < 4; i++) {
@@ -67,6 +67,9 @@ export default {
       this.totalTries = this.players[this.currPlayerID].totalTries;
 
       if (this.totalTries < this.players[this.currPlayerID].maxTries) {
+       
+       console.log("Curr ID: " + this.currPlayerID);
+
         /*Set the current try*/
         this.$store.dispatch("aNextTry");
 
@@ -82,8 +85,9 @@ export default {
         /*Award extra turns if spare or strike on last turn*/
         this.checkExtend();
         
-        /*Trigger shcema update*/
-        this.schemaUpdateTrigger++;
+        /*Trigger shcema update - uses splice to make sure the watcher triggers.*/
+        let triggerCount =  this.schemaUpdateTrigger[this.currPlayerID];
+        this.schemaUpdateTrigger.splice(this.currPlayerID, 1, triggerCount + 1)
       }
     },
     checkScoreType(pinsHit) {

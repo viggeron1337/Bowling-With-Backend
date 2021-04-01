@@ -35,7 +35,7 @@ import ResetSchema from "@/components/ResetSchema.vue";
 export default {
   name: "BowlingSchema",
   components: {
-    ResetSchema,
+    ResetSchema
   },
   data() {
     return {
@@ -59,28 +59,32 @@ export default {
       players: []
     };
   },
-  created: function () {
+  created: function() {
     for (let i = 0; i < 9; i++) {
       this.schema[i] = {
         first: "0",
         second: "0",
-        total: "0",
+        total: "0"
       };
       this.schema[9] = {
         first: "0",
         second: "0",
         bonus: "0",
-        total: "0",
+        total: "0"
       };
     }
   },
   props: ["updateTrigger"],
   watch: {
-    updateTrigger: function () {
+    updateTrigger: {
       /*This function makes changes to an array- and for vue to react to 
       these changes, the array is changed using the wrapped array functions (splice in this case).*/
-      this.assignNewEntry();
-    },
+      deep: true,
+      handler() {
+        console.log("Triggered!");
+        this.assignNewEntry();
+      }
+    }
   },
   methods: {
     assignNewEntry() {
@@ -326,13 +330,13 @@ export default {
         this.schema.splice(i, 1, {
           first: "0",
           second: "0",
-          total: "0",
+          total: "0"
         });
         this.schema.splice(9, 1, {
           first: "0",
           second: "0",
           bonus: "0",
-          total: "0",
+          total: "0"
         });
       }
     },
@@ -350,8 +354,8 @@ export default {
       this.extended = false;
       this.lastField = false;
       (this.currEntry = {}), (this.totalTries = 0);
-    },
-  },
+    }
+  }
 };
 </script>
 
