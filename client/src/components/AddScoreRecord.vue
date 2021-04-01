@@ -14,7 +14,7 @@
       <BowlingSchemaComponent
         v-for="index in this.numOfPlayers"
         :key="index"
-        :updateTrigger="schemaUpdateTrigger[currPlayerID]"
+        :updateTrigger="schemaUpdateTrigger[currPlayerID + (index - 1)]"
         @reset="onResetClickChild"
       ></BowlingSchemaComponent>
     </div>
